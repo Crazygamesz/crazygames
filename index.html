@@ -3,311 +3,297 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NEXUS ARCADE | Global Cyber Edition</title>
+  <title>NEXUS ARCADE | Cyber Edition</title>
   
-  <!-- Google Fonts & Phosphor Icons -->
+  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
-  <!-- Canvas Confetti for Epic High Scores -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-  <!-- Firebase SDKs for Working Global Leaderboard & Accounts -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <style>
     :root {
-      --bg-base: #050508;
-      --bg-surface: rgba(16, 17, 26, 0.75);
-      --bg-surface-hover: rgba(25, 27, 40, 0.85);
+      --bg-base: #030307;
+      --bg-surface: rgba(13, 14, 22, 0.85);
       --primary: #7c5cff;
-      --primary-hover: #9175ff;
       --neon-cyan: #00f3ff;
       --neon-pink: #ff0055;
       --neon-gold: #ffcc00;
       --text-main: #ffffff;
       --text-muted: #8c90ad;
-      --border: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.1);
       --card-radius: 16px;
       --transition: 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; user-select: none; }
-    
-    body { background-color: var(--bg-base); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
+    body { background-color: var(--bg-base); color: var(--text-main); height: 100vh; overflow: hidden; position: relative; }
 
-    /* Interactive Background Canvas */
     #bgCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
-    /* Custom Scrollbars */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg-base); }
     ::-webkit-scrollbar-thumb { background: #202234; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
-    /* Sidebar Navigation */
-    .sidebar { width: 260px; background: var(--bg-surface); backdrop-filter: blur(20px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; z-index: 10; flex-shrink: 0; }
-    
-    .brand { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 30px; padding: 0 8px; letter-spacing: 1px; }
-    .brand i { color: var(--neon-cyan); font-size: 32px; filter: drop-shadow(0 0 12px var(--neon-cyan)); animation: pulseGlow 2s infinite alternate; }
+    /* AUTH GATE (MANDATORY LOGIN) */
+    #authGate {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(3, 3, 7, 0.96);
+      backdrop-filter: blur(25px);
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    #authGate.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 
-    @keyframes pulseGlow {
-      0% { filter: drop-shadow(0 0 6px var(--neon-cyan)); }
-      100% { filter: drop-shadow(0 0 18px var(--neon-cyan)); }
+    .gate-box {
+      width: 420px; max-width: 90%;
+      background: rgba(16, 18, 30, 0.95);
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      border-radius: 24px; padding: 40px 32px;
+      box-shadow: 0 0 60px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 243, 255, 0.05);
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .gate-box::before {
+      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(0, 243, 255, 0.12) 0%, transparent 60%);
+      pointer-events: none; animation: pulseGlow 4s ease-in-out infinite alternate;
     }
 
+    @keyframes pulseGlow {
+      0% { transform: scale(0.9); opacity: 0.6; }
+      100% { transform: scale(1.1); opacity: 1; }
+    }
+
+    .gate-logo { font-size: 34px; font-weight: 900; letter-spacing: 2px; color: #fff; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .gate-logo i { color: var(--neon-cyan); font-size: 40px; filter: drop-shadow(0 0 15px var(--neon-cyan)); }
+    .gate-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+
+    .auth-form { display: flex; flex-direction: column; gap: 16px; text-align: left; position: relative; z-index: 2; }
+    .input-group label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--neon-cyan); letter-spacing: 1px; display: block; margin-bottom: 6px; }
+    .input-group input {
+      width: 100%; background: rgba(5, 5, 12, 0.85);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; color: #fff; font-size: 15px; font-weight: 600; outline: none; transition: var(--transition);
+    }
+    .input-group input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 18px rgba(0, 243, 255, 0.35); }
+
+    .gate-btn {
+      background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--primary) 100%);
+      color: #000; font-weight: 900; font-size: 15px; text-transform: uppercase; letter-spacing: 1px;
+      padding: 16px; border: none; border-radius: 12px; cursor: pointer; margin-top: 10px;
+      transition: var(--transition); box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .gate-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 0 35px var(--neon-cyan); color: #fff; }
+
+    /* MAIN APP LAYOUT */
+    #appLayout { display: flex; height: 100vh; position: relative; z-index: 5; }
+
+    .sidebar { width: 260px; background: var(--bg-surface); backdrop-filter: blur(20px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; flex-shrink: 0; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 30px; padding: 0 8px; }
+    .brand i { color: var(--neon-cyan); font-size: 32px; filter: drop-shadow(0 0 12px var(--neon-cyan)); }
+
     .nav-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.5px; margin: 18px 0 8px 10px; }
-    
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; color: var(--text-muted); font-weight: 600; font-size: 14px; cursor: pointer; transition: var(--transition); margin-bottom: 4px; border: 1px solid transparent; }
-    .nav-item i { font-size: 20px; }
-    .nav-item:hover { background: var(--bg-surface-hover); color: #fff; border-color: rgba(255,255,255,0.05); transform: translateX(3px); }
-    .nav-item.active { background: linear-gradient(90deg, rgba(0, 243, 255, 0.15) 0%, transparent 100%); color: var(--neon-cyan); border-left: 3px solid var(--neon-cyan); border-radius: 4px 10px 10px 4px; text-shadow: 0 0 10px rgba(0, 243, 255, 0.5); }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; color: var(--text-muted); font-weight: 600; font-size: 14px; cursor: pointer; transition: var(--transition); margin-bottom: 4px; }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; transform: translateX(3px); }
+    .nav-item.active { background: linear-gradient(90deg, rgba(0, 243, 255, 0.15) 0%, transparent 100%); color: var(--neon-cyan); border-left: 3px solid var(--neon-cyan); }
 
-    /* Main View */
-    .main-view { flex: 1; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 5; }
+    .main-view { flex: 1; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
     
-    /* Top Header */
-    .header { position: sticky; top: 0; background: rgba(5, 5, 8, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 14px 35px; display: flex; justify-content: space-between; align-items: center; z-index: 50; }
-    
-    .search-bar { display: flex; align-items: center; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 8px 16px; width: 340px; transition: var(--transition); }
-    .search-bar:focus-within { border-color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.25); }
-    .search-bar i { color: var(--text-muted); font-size: 18px; margin-right: 10px; }
-    .search-bar input { background: transparent; border: none; outline: none; color: #fff; width: 100%; font-size: 14px; }
+    .header { position: sticky; top: 0; background: rgba(3, 3, 7, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 14px 35px; display: flex; justify-content: space-between; align-items: center; z-index: 50; }
+    .search-bar { display: flex; align-items: center; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 8px 16px; width: 340px; }
+    .search-bar input { background: transparent; border: none; outline: none; color: #fff; width: 100%; font-size: 14px; margin-left: 8px; }
 
-    .header-actions { display: flex; align-items: center; gap: 14px; }
-    
     .user-badge { background: linear-gradient(135deg, rgba(124, 92, 255, 0.2) 0%, rgba(0, 243, 255, 0.1) 100%); border: 1px solid rgba(0, 243, 255, 0.3); border-radius: 25px; padding: 6px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: var(--transition); }
-    .user-badge:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); border-color: var(--neon-cyan); }
+    .user-badge:hover { border-color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
     .user-avatar { width: 28px; height: 28px; background: var(--neon-cyan); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; }
-    .user-name { font-size: 13px; font-weight: 700; color: #fff; }
 
-    /* Hero Banner */
     .content { padding: 30px 35px; }
-    .hero { background: linear-gradient(135deg, rgba(124, 92, 255, 0.35) 0%, rgba(0, 243, 255, 0.15) 100%), url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80') center/cover; height: 290px; border-radius: 20px; margin-bottom: 35px; position: relative; overflow: hidden; display: flex; align-items: flex-end; padding: 35px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    
+    .hero {
+      background: linear-gradient(135deg, rgba(124, 92, 255, 0.45) 0%, rgba(0, 243, 255, 0.25) 100%), url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80') center/cover;
+      height: 320px; border-radius: 24px; margin-bottom: 35px; position: relative; overflow: hidden; display: flex; align-items: flex-end; padding: 35px; border: 1px solid rgba(0, 243, 255, 0.35); box-shadow: 0 20px 50px rgba(0, 243, 255, 0.18);
+    }
     .hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, var(--bg-base) 0%, transparent 100%); }
     .hero-content { position: relative; z-index: 2; }
     .hero-tag { background: var(--neon-pink); color: #fff; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 10px; box-shadow: 0 0 12px var(--neon-pink); }
-    .hero h1 { font-size: 42px; font-weight: 900; margin-bottom: 6px; line-height: 1.1; letter-spacing: -0.5px; }
-    .hero p { font-size: 15px; color: #d0d0e0; max-width: 540px; margin-bottom: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+    .hero h1 { font-size: 46px; font-weight: 900; margin-bottom: 8px; letter-spacing: -0.5px; text-shadow: 0 0 25px rgba(0,243,255,0.7); }
+    .hero p { font-size: 15px; color: #d0d0e0; max-width: 580px; margin-bottom: 22px; line-height: 1.5; }
     
     .btn-group { display: flex; gap: 12px; }
-    .play-btn { background: var(--neon-cyan); color: #000; padding: 12px 28px; border-radius: 30px; font-size: 14px; font-weight: 800; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: var(--transition); text-transform: uppercase; letter-spacing: 0.5px; }
-    .play-btn:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 0 25px var(--neon-cyan); }
+    .play-btn { background: var(--neon-cyan); color: #000; padding: 14px 32px; border-radius: 30px; font-size: 14px; font-weight: 900; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; transition: var(--transition); box-shadow: 0 0 20px var(--neon-cyan); }
+    .play-btn:hover { background: #fff; transform: translateY(-2px) scale(1.03); box-shadow: 0 0 30px #fff; }
     
-    .leaderboard-btn { background: rgba(255, 255, 255, 0.08); color: #fff; border: 1px solid var(--border); padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: var(--transition); backdrop-filter: blur(10px); }
-    .leaderboard-btn:hover { background: rgba(255,255,255,0.18); border-color: var(--neon-gold); color: var(--neon-gold); transform: translateY(-2px); box-shadow: 0 0 15px rgba(255, 204, 0, 0.3); }
+    .leaderboard-btn { background: rgba(255, 255, 255, 0.08); color: #fff; border: 1px solid var(--border); padding: 14px 26px; border-radius: 30px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: var(--transition); backdrop-filter: blur(10px); }
+    .leaderboard-btn:hover { background: rgba(255,255,255,0.18); border-color: var(--neon-gold); color: var(--neon-gold); }
 
-    /* Game Cards Grid */
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .section-header h2 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
-    .section-header h2 i { color: var(--neon-cyan); }
-
+    .section-header h2 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
     .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 22px; margin-bottom: 40px; }
     
     .game-card { background: var(--bg-surface); backdrop-filter: blur(12px); border-radius: var(--card-radius); overflow: hidden; position: relative; cursor: pointer; transition: var(--transition); border: 1px solid var(--border); aspect-ratio: 16/10; }
     .game-card img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition); }
-    
-    .game-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 25px 14px 12px; background: linear-gradient(to top, rgba(5,5,8,0.95) 0%, rgba(5,5,8,0) 100%); transform: translateY(4px); transition: var(--transition); }
+    .game-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 25px 14px 12px; background: linear-gradient(to top, rgba(3,3,7,0.95) 0%, rgba(3,3,7,0) 100%); }
     .game-info h4 { font-size: 16px; font-weight: 800; margin-bottom: 3px; }
-    .game-info .tag { font-size: 11px; background: rgba(255,255,255,0.1); backdrop-filter: blur(4px); padding: 3px 8px; border-radius: 4px; display: inline-block; color: var(--neon-cyan); font-weight: 600; }
+    .game-info .tag { font-size: 11px; background: rgba(0, 243, 255, 0.15); padding: 3px 8px; border-radius: 4px; display: inline-block; color: var(--neon-cyan); font-weight: 700; }
 
-    .hover-play { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) scale(0.6); opacity: 0; width: 50px; height: 50px; background: var(--neon-cyan); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: var(--transition); box-shadow: 0 0 25px var(--neon-cyan); }
+    .game-card:hover { transform: translateY(-6px); border-color: var(--neon-cyan); box-shadow: 0 15px 30px rgba(0, 243, 255, 0.25); }
+    .game-card:hover img { transform: scale(1.08); filter: brightness(0.65); }
 
-    .game-card:hover { transform: translateY(-6px); border-color: var(--neon-cyan); box-shadow: 0 15px 30px rgba(0, 243, 255, 0.2); }
-    .game-card:hover img { transform: scale(1.08); filter: brightness(0.6); }
-    .game-card:hover .game-info { transform: translateY(0); }
-    .game-card:hover .hover-play { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-
-    /* Modals System */
-    .modal { display: none; position: fixed; inset: 0; background: rgba(3, 3, 6, 0.9); backdrop-filter: blur(16px); z-index: 100; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
-    .modal.active { display: flex; opacity: 1; }
+    /* MODALS */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(3, 3, 7, 0.92); backdrop-filter: blur(18px); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
+    .modal.active { display: flex; }
+    .modal-box { background: var(--bg-surface); border: 1px solid rgba(0, 243, 255, 0.3); border-radius: 20px; width: 680px; max-width: 92%; padding: 30px; position: relative; box-shadow: 0 0 50px rgba(0, 243, 255, 0.15); }
     
-    .modal-box { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; width: 680px; max-width: 92%; padding: 30px; position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.8); }
-    .modal-box h3 { font-size: 24px; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--neon-cyan); }
-
     .close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255, 255, 255, 0.08); color: #fff; border: 1px solid var(--border); width: 36px; height: 36px; border-radius: 50%; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
     .close-btn:hover { background: var(--neon-pink); border-color: var(--neon-pink); transform: rotate(90deg); }
 
-    /* Account Modal Styling */
-    .auth-input-group { margin-bottom: 16px; }
-    .auth-input-group label { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px; }
-    .auth-input-group input { width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: #fff; font-size: 14px; outline: none; transition: var(--transition); }
-    .auth-input-group input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 12px rgba(0, 243, 255, 0.2); }
-    
-    .auth-submit-btn { width: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--neon-cyan) 100%); color: #fff; font-weight: 800; font-size: 15px; padding: 14px; border: none; border-radius: 12px; cursor: pointer; margin-top: 10px; transition: var(--transition); text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-    .auth-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.4); }
-
-    /* Leaderboard Styling */
-    .lb-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-    .lb-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-muted); transition: var(--transition); }
-    .lb-tab.active { background: rgba(0, 243, 255, 0.15); color: var(--neon-cyan); border: 1px solid rgba(0, 243, 255, 0.3); }
-
-    .lb-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    .lb-table th { text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    /* LEADERBOARD TABLE */
+    .lb-table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+    .lb-table th { text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding: 10px 14px; border-bottom: 1px solid var(--border); letter-spacing: 1px; }
     .lb-table td { padding: 12px 14px; font-size: 14px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.03); }
-    .lb-table tr:hover { background: rgba(255, 255, 255, 0.03); }
-
     .rank-badge { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; }
-    .rank-1 { background: #ffcc00; color: #000; box-shadow: 0 0 10px #ffcc00; }
+    .rank-1 { background: #ffcc00; color: #000; box-shadow: 0 0 12px #ffcc00; }
     .rank-2 { background: #d0d0d0; color: #000; }
     .rank-3 { background: #cd7f32; color: #000; }
 
-    /* Fullscreen Game Modal */
-    #gameModal .modal-box { width: 980px; max-width: 95%; padding: 16px; background: #000; border-color: rgba(0, 243, 255, 0.3); box-shadow: 0 0 50px rgba(0, 243, 255, 0.2); }
+    /* GAME WINDOW */
+    #gameModal .modal-box { width: 980px; max-width: 95%; padding: 18px; background: #000; border-color: var(--neon-cyan); }
     #gameCanvas { width: 100%; height: 520px; background: #000; border-radius: 12px; display: block; }
     .game-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .game-modal-title { font-size: 18px; font-weight: 900; color: var(--neon-cyan); display: flex; align-items: center; gap: 8px; }
   </style>
 </head>
 <body>
 
-  <!-- Dynamic Starfield Canvas -->
   <canvas id="bgCanvas"></canvas>
 
-  <!-- Sidebar Nav -->
-  <nav class="sidebar">
-    <div class="brand">
-      <i class="ph-fill ph-intersect"></i>
-      <span>NEXUS</span>
-    </div>
-
-    <div class="nav-label">Explore</div>
-    <div class="nav-item active" onclick="filterCategory('all', this)"><i class="ph ph-squares-four"></i> All Games</div>
-    <div class="nav-item" onclick="filterCategory('rhythm', this)"><i class="ph ph-wave-sine"></i> GD & Wave</div>
-    <div class="nav-item" onclick="filterCategory('arcade', this)"><i class="ph ph-game-controller"></i> Classic Arcade</div>
-    
-    <div class="nav-label">Community & Rank</div>
-    <div class="nav-item" onclick="openModal('leaderboardModal')"><i class="ph-fill ph-trophy"></i> Global Ranks</div>
-    <div class="nav-item" onclick="openModal('accountModal')"><i class="ph-fill ph-user-circle"></i> Player Profile</div>
-  </nav>
-
-  <!-- Main View -->
-  <main class="main-view">
-    
-    <header class="header">
-      <div class="search-bar">
-        <i class="ph ph-magnifying-glass"></i>
-        <input type="text" id="searchInput" placeholder="Search games..." onkeyup="searchGames()">
+  <!-- 1. MANDATORY ACCOUNT GATE -->
+  <div id="authGate">
+    <div class="gate-box">
+      <div class="gate-logo">
+        <i class="ph-fill ph-intersect"></i>
+        <span>NEXUS</span>
       </div>
-      <div class="header-actions">
-        <div class="user-badge" onclick="openModal('accountModal')">
-          <div class="user-avatar" id="headerAvatar">G</div>
-          <div class="user-name" id="headerUsername">Guest Player</div>
-        </div>
-      </div>
-    </header>
-
-    <div class="content">
+      <div class="gate-subtitle">Authentication Required</div>
       
-      <!-- Hero Banner -->
-      <div class="hero">
-        <div class="hero-content">
-          <span class="hero-tag">Global Live Competition</span>
-          <h1>Geometry Dash: Wave Neo</h1>
-          <p>Pure 45° Geometry Dash Wave physics with real-time global leaderboard sync, custom neon particle physics, and Web Audio synthesizers.</p>
-          <div class="btn-group">
-            <button class="play-btn" onclick="launchGame('wave')">
-              <i class="ph-fill ph-play-circle"></i> Play Wave Mode
-            </button>
-            <button class="leaderboard-btn" onclick="openModal('leaderboardModal')">
-              <i class="ph-fill ph-trophy"></i> Global Leaderboard
-            </button>
-          </div>
+      <form class="auth-form" onsubmit="handleAccountGate(event)">
+        <div class="input-group">
+          <label>Create GamerTag / Username</label>
+          <input type="text" id="gateUsername" placeholder="e.g. WaveGod2026" required minlength="3" autocomplete="off">
         </div>
-      </div>
-
-      <!-- Playable Games Grid -->
-      <div class="section-header">
-        <h2><i class="ph-fill ph-lightning"></i> 100% Playable Games</h2>
-      </div>
-      
-      <div class="game-grid" id="gameGrid">
-        <div class="game-card" data-category="rhythm" data-title="Geometry Dash Wave Neo" onclick="launchGame('wave')">
-          <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80" alt="Wave Mode">
-          <div class="hover-play"><i class="ph-fill ph-play"></i></div>
-          <div class="game-info">
-            <h4>GD: Wave Neo</h4>
-            <span class="tag">Rhythm / Wave</span>
-          </div>
+        <div class="input-group">
+          <label>Access Key / Password</label>
+          <input type="password" id="gatePassword" placeholder="••••••••••••" required minlength="4">
         </div>
-
-        <div class="game-card" data-category="rhythm" data-title="Geometry Dash Cube Runner" onclick="launchGame('cube')">
-          <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80" alt="Cube Mode">
-          <div class="hover-play"><i class="ph-fill ph-play"></i></div>
-          <div class="game-info">
-            <h4>GD: Cube Jump</h4>
-            <span class="tag">Platformer</span>
-          </div>
-        </div>
-
-        <div class="game-card" data-category="arcade" data-title="Neon Breakout" onclick="launchGame('breakout')">
-          <img src="https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?auto=format&fit=crop&w=600&q=80" alt="Neon Breakout">
-          <div class="hover-play"><i class="ph-fill ph-play"></i></div>
-          <div class="game-info">
-            <h4>Neon Breakout</h4>
-            <span class="tag">Arcade</span>
-          </div>
-        </div>
-
-        <div class="game-card" data-category="arcade" data-title="Cyber Snake 2026" onclick="launchGame('snake')">
-          <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80" alt="Cyber Snake">
-          <div class="hover-play"><i class="ph-fill ph-play"></i></div>
-          <div class="game-info">
-            <h4>Cyber Snake</h4>
-            <span class="tag">Classic Arcade</span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </main>
-
-  <!-- ACCOUNT / REGISTER MODAL -->
-  <div class="modal" id="accountModal">
-    <div class="modal-box">
-      <button class="close-btn" onclick="closeModal('accountModal')"><i class="ph ph-x"></i></button>
-      <h3><i class="ph-fill ph-user-circle"></i> Player Account</h3>
-      
-      <div id="authForms">
-        <div class="auth-input-group">
-          <label>Username / GamerTag</label>
-          <input type="text" id="authUsername" placeholder="e.g. CyberDash99">
-        </div>
-        <div class="auth-input-group">
-          <label>Account Password</label>
-          <input type="password" id="authPassword" placeholder="••••••••••••">
-        </div>
-        <button class="auth-submit-btn" onclick="handleRegisterLogin()">Save & Sync Global Account</button>
-      </div>
+        <button type="submit" class="gate-btn"><i class="ph-fill ph-key"></i> Enter Cyber System</button>
+      </form>
     </div>
   </div>
 
-  <!-- GLOBAL LEADERBOARD MODAL -->
+  <!-- 2. MAIN APP PORTAL -->
+  <div id="appLayout">
+    <nav class="sidebar">
+      <div class="brand">
+        <i class="ph-fill ph-intersect"></i>
+        <span>NEXUS</span>
+      </div>
+
+      <div class="nav-label">Explore</div>
+      <div class="nav-item active" onclick="filterCategory('all', this)"><i class="ph ph-squares-four"></i> All Games</div>
+      <div class="nav-item" onclick="filterCategory('rhythm', this)"><i class="ph ph-wave-sine"></i> GD & Wave</div>
+      <div class="nav-item" onclick="filterCategory('arcade', this)"><i class="ph ph-game-controller"></i> Classic Arcade</div>
+      
+      <div class="nav-label">Community</div>
+      <div class="nav-item" onclick="openLeaderboard()"><i class="ph-fill ph-trophy"></i> Global Leaderboard</div>
+      <div class="nav-item" onclick="logoutAccount()"><i class="ph-fill ph-sign-out"></i> Switch Account</div>
+    </nav>
+
+    <main class="main-view">
+      <header class="header">
+        <div class="search-bar">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" id="searchInput" placeholder="Search games..." onkeyup="searchGames()">
+        </div>
+        <div class="user-badge" onclick="openLeaderboard()">
+          <div class="user-avatar" id="headerAvatar">G</div>
+          <div class="user-name" id="headerUsername">Player</div>
+        </div>
+      </header>
+
+      <div class="content">
+        <!-- Hero Banner -->
+        <div class="hero">
+          <div class="hero-content">
+            <span class="hero-tag">🔥 SPACEWAVES GLOWUP 1000X</span>
+            <h1>GEOMETRY DASH: SPACEWAVES NEO</h1>
+            <p>Experience pure 45-degree Geometry Dash Wave velocity. Features dynamic RGB laser ribbon trails, speed shockwaves, directional spark bursts, and instant global score syncing!</p>
+            <div class="btn-group">
+              <button class="play-btn" onclick="launchGame('wave')">
+                <i class="ph-fill ph-play-circle"></i> Launch Spacewaves
+              </button>
+              <button class="leaderboard-btn" onclick="openLeaderboard()">
+                <i class="ph-fill ph-trophy"></i> Ranks
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h2><i class="ph-fill ph-lightning" style="color:var(--neon-cyan)"></i> Playable Cyber Games</h2>
+        </div>
+        
+        <div class="game-grid" id="gameGrid">
+          <div class="game-card" data-category="rhythm" data-title="Spacewaves Neo Geometry Dash" onclick="launchGame('wave')">
+            <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80" alt="Spacewaves">
+            <div class="game-info">
+              <h4>Spacewaves GD Wave</h4>
+              <span class="tag">Rhythm / Wave</span>
+            </div>
+          </div>
+
+          <div class="game-card" data-category="rhythm" data-title="Geometry Dash Cube Runner" onclick="launchGame('cube')">
+            <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80" alt="Cube Mode">
+            <div class="game-info">
+              <h4>GD: Cube Jump</h4>
+              <span class="tag">Platformer</span>
+            </div>
+          </div>
+
+          <div class="game-card" data-category="arcade" data-title="Neon Breakout" onclick="launchGame('breakout')">
+            <img src="https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?auto=format&fit=crop&w=600&q=80" alt="Neon Breakout">
+            <div class="game-info">
+              <h4>Neon Breakout</h4>
+              <span class="tag">Arcade</span>
+            </div>
+          </div>
+
+          <div class="game-card" data-category="arcade" data-title="Cyber Snake" onclick="launchGame('snake')">
+            <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80" alt="Cyber Snake">
+            <div class="game-info">
+              <h4>Cyber Snake</h4>
+              <span class="tag">Classic Arcade</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- LEADERBOARD MODAL -->
   <div class="modal" id="leaderboardModal">
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal('leaderboardModal')"><i class="ph ph-x"></i></button>
-      <h3><i class="ph-fill ph-trophy"></i> Global Leaderboard</h3>
-      
-      <div class="lb-tabs">
-        <div class="lb-tab active" onclick="switchLeaderboardTab('wave', this)">GD Wave</div>
-        <div class="lb-tab" onclick="switchLeaderboardTab('cube', this)">GD Cube</div>
-        <div class="lb-tab" onclick="switchLeaderboardTab('breakout', this)">Breakout</div>
-        <div class="lb-tab" onclick="switchLeaderboardTab('snake', this)">Cyber Snake</div>
-      </div>
-
+      <h3 style="color:var(--neon-gold); font-size:24px; font-weight:900; display:flex; align-items:center; gap:10px;">
+        <i class="ph-fill ph-trophy"></i> Global Leaderboard
+      </h3>
       <table class="lb-table">
         <thead>
           <tr>
             <th>Rank</th>
-            <th>Player</th>
-            <th>High Score</th>
+            <th>GamerTag</th>
+            <th>Spacewaves Score</th>
           </tr>
         </thead>
-        <tbody id="leaderboardBody">
-          <!-- Live Global Score Rows -->
-        </tbody>
+        <tbody id="leaderboardBody"></tbody>
       </table>
     </div>
   </div>
@@ -316,7 +302,7 @@
   <div class="modal" id="gameModal">
     <div class="modal-box">
       <div class="game-modal-header">
-        <div class="game-modal-title" id="gameModalTitle"><i class="ph-fill ph-game-controller"></i> Playing</div>
+        <div style="font-size: 18px; font-weight: 900; color: var(--neon-cyan);" id="gameModalTitle">Playing</div>
         <button class="close-btn" onclick="closeModal('gameModal')" style="position:static;"><i class="ph ph-x"></i></button>
       </div>
       <canvas id="gameCanvas" width="960" height="520"></canvas>
@@ -324,162 +310,87 @@
   </div>
 
   <script>
-    /* ==============================================================
-       1. FIREBASE & CLOUD BACKEND INITIALIZATION (WITH LOCAL FALLBACK)
-       ============================================================== */
-    const firebaseConfig = {
-      apiKey: "AIzaSyDemoKeyNexusArcade2026",
-      authDomain: "nexus-arcade-global.firebaseapp.com",
-      databaseURL: "https://nexus-arcade-global-default-rtdb.firebaseio.com",
-      projectId: "nexus-arcade-global",
-      storageBucket: "nexus-arcade-global.appspot.com",
-      messagingSenderId: "1234567890",
-      appId: "1:1234567890:web:nexusarcade2026"
+    /* --------------------------------------------------------------
+       1. MANDATORY ACCOUNT AUTHENTICATION SYSTEM
+       -------------------------------------------------------------- */
+    let currentUser = localStorage.getItem('nexus_user');
+
+    function checkAuth() {
+      if (!currentUser) {
+        document.getElementById('authGate').classList.remove('hidden');
+      } else {
+        document.getElementById('authGate').classList.add('hidden');
+        document.getElementById('headerUsername').innerText = currentUser;
+        document.getElementById('headerAvatar').innerText = currentUser.charAt(0).toUpperCase();
+      }
+    }
+
+    function handleAccountGate(e) {
+      e.preventDefault();
+      const user = document.getElementById('gateUsername').value.trim();
+      if (user.length >= 3) {
+        currentUser = user;
+        localStorage.setItem('nexus_user', currentUser);
+        SFX.playSuccess();
+        checkAuth();
+      }
+    }
+
+    function logoutAccount() {
+      localStorage.removeItem('nexus_user');
+      currentUser = null;
+      checkAuth();
+    }
+
+    checkAuth();
+
+    /* --------------------------------------------------------------
+       2. GLOBAL LEADERBOARD PERSISTENCE
+       -------------------------------------------------------------- */
+    const GlobalStore = {
+      getScores() {
+        let scores = JSON.parse(localStorage.getItem('nexus_global_scores')) || [
+          { name: "ViperWave_99", score: 1850 },
+          { name: "CyberNinja", score: 1420 },
+          { name: "AstroRider", score: 980 },
+          { name: "NeonGod", score: 740 }
+        ];
+        return scores.sort((a, b) => b.score - a.score);
+      },
+      saveScore(name, score) {
+        let scores = this.getScores();
+        let existing = scores.find(s => s.name === name);
+        if (existing) {
+          if (score > existing.score) existing.score = score;
+        } else {
+          scores.push({ name: name, score: score });
+        }
+        localStorage.setItem('nexus_global_scores', JSON.stringify(scores));
+      }
     };
 
-    let db = null;
-    let currentUser = localStorage.getItem('nexus_username') || 'Guest_' + Math.floor(1000 + Math.random() * 9000);
-
-    try {
-      firebase.initializeApp(firebaseConfig);
-      db = firebase.database();
-    } catch (e) {
-      console.warn("Firebase running in offline local mode");
-    }
-
-    function updateProfileDisplay() {
-      document.getElementById('headerUsername').innerText = currentUser;
-      document.getElementById('headerAvatar').innerText = currentUser.charAt(0).toUpperCase();
-      document.getElementById('authUsername').value = currentUser;
-    }
-    updateProfileDisplay();
-
-    function handleRegisterLogin() {
-      const userVal = document.getElementById('authUsername').value.trim();
-      if (userVal.length >= 3) {
-        currentUser = userVal;
-        localStorage.setItem('nexus_username', currentUser);
-        updateProfileDisplay();
-        SFX.playRegisterSuccess();
-        closeModal('accountModal');
-        alert(`Account registered as: ${currentUser}! Your high scores will now record to the Global Leaderboard.`);
-      } else {
-        alert("Please enter a username with at least 3 characters.");
-      }
-    }
-
-    /* ==============================================================
-       2. GLOBAL LEADERBOARD LOGIC
-       ============================================================== */
-    const localCloudScores = {
-      wave: [
-        { name: "ViperWave", score: 1420 },
-        { name: "GeoGod", score: 980 },
-        { name: "NeonRider", score: 650 }
-      ],
-      cube: [
-        { name: "PixelJumper", score: 850 },
-        { name: "ViperWave", score: 720 }
-      ],
-      breakout: [
-        { name: "BrickSlayer", score: 450 }
-      ],
-      snake: [
-        { name: "CyberPython", score: 320 }
-      ]
-    };
-
-    let activeLbTab = 'wave';
-
-    function submitGlobalScore(gameKey, score) {
-      if (score <= 0) return;
-      
-      // Save locally
-      let currentLocalBest = parseInt(localStorage.getItem(`hscore_${gameKey}`)) || 0;
-      if (score > currentLocalBest) {
-        localStorage.setItem(`hscore_${gameKey}`, score);
-      }
-
-      // Save to Firebase
-      if (db) {
-        try {
-          db.ref(`leaderboards/${gameKey}/${currentUser.replace(/[^a-zA-Z0-9]/g, "_")}`).set({
-            name: currentUser,
-            score: score,
-            timestamp: Date.now()
-          });
-        } catch(e){}
-      }
-
-      // Save to local fallback store
-      let gameScores = localCloudScores[gameKey] || [];
-      let existing = gameScores.find(s => s.name === currentUser);
-      if (existing) {
-        if (score > existing.score) existing.score = score;
-      } else {
-        gameScores.push({ name: currentUser, score: score });
-      }
-      localCloudScores[gameKey] = gameScores;
-    }
-
-    function renderLeaderboard(gameKey) {
-      const tbody = document.getElementById('leaderboardBody');
-      tbody.innerHTML = '<tr><td colspan="3">Syncing scores...</td></tr>';
-
-      let scoresList = [];
-
-      if (db) {
-        db.ref(`leaderboards/${gameKey}`).orderByChild('score').limitToLast(10).once('value', snapshot => {
-          let data = snapshot.val();
-          if (data) {
-            scoresList = Object.values(data);
-          } else {
-            scoresList = localCloudScores[gameKey] || [];
-          }
-          drawScoresTable(scoresList);
-        }).catch(() => {
-          drawScoresTable(localCloudScores[gameKey] || []);
-        });
-      } else {
-        drawScoresTable(localCloudScores[gameKey] || []);
-      }
-    }
-
-    function drawScoresTable(list) {
+    function openLeaderboard() {
+      SFX.playHover();
+      document.getElementById('leaderboardModal').classList.add('active');
       const tbody = document.getElementById('leaderboardBody');
       tbody.innerHTML = '';
       
-      list.sort((a, b) => b.score - a.score);
-
-      if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-muted);">No high scores recorded yet! Be the first!</td></tr>';
-        return;
-      }
-
-      list.forEach((item, index) => {
+      const scores = GlobalStore.getScores();
+      scores.forEach((item, index) => {
         let rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
-        let row = `
+        tbody.innerHTML += `
           <tr>
             <td><div class="rank-badge ${rankClass}">${index + 1}</div></td>
             <td style="color: ${item.name === currentUser ? 'var(--neon-cyan)' : '#fff'}">${item.name} ${item.name === currentUser ? '(You)' : ''}</td>
-            <td style="color: var(--neon-gold); font-weight: 800;">${item.score} ${activeLbTab === 'wave' ? 'm' : 'pts'}</td>
+            <td style="color: var(--neon-gold); font-weight: 800;">${item.score}m</td>
           </tr>
         `;
-        tbody.innerHTML += row;
       });
     }
 
-    function switchLeaderboardTab(gameKey, el) {
-      document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
-      el.classList.add('active');
-      activeLbTab = gameKey;
-      SFX.playHover();
-      renderLeaderboard(gameKey);
-    }
-
-    /* ==============================================================
-       3. ADVANCED WEB AUDIO SYNTHESIZER ENGINE
-       ============================================================== */
+    /* --------------------------------------------------------------
+       3. SYNTHESIZED AUDIO SFX
+       -------------------------------------------------------------- */
     const SFX = {
       ctx: null,
       init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -488,10 +399,9 @@
           this.init();
           let osc = this.ctx.createOscillator(), g = this.ctx.createGain();
           osc.connect(g); g.connect(this.ctx.destination);
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(440, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.04);
-          g.gain.setValueAtTime(0.03, this.ctx.currentTime);
+          osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.04);
+          g.gain.setValueAtTime(0.02, this.ctx.currentTime);
           g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
           osc.start(); osc.stop(this.ctx.currentTime + 0.04);
         } catch(e){}
@@ -502,8 +412,8 @@
           let osc = this.ctx.createOscillator(), g = this.ctx.createGain();
           osc.connect(g); g.connect(this.ctx.destination);
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.08);
+          osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(650, this.ctx.currentTime + 0.08);
           g.gain.setValueAtTime(0.12, this.ctx.currentTime);
           g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
           osc.start(); osc.stop(this.ctx.currentTime + 0.08);
@@ -515,14 +425,14 @@
           let osc = this.ctx.createOscillator(), g = this.ctx.createGain();
           osc.connect(g); g.connect(this.ctx.destination);
           osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.3);
+          osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.35);
           g.gain.setValueAtTime(0.25, this.ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
-          osc.start(); osc.stop(this.ctx.currentTime + 0.3);
+          g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.35);
         } catch(e){}
       },
-      playRegisterSuccess() {
+      playSuccess() {
         try {
           this.init();
           let now = this.ctx.currentTime;
@@ -539,24 +449,18 @@
       }
     };
 
-    /* ==============================================================
-       4. INTERACTIVE BACKGROUND STARFIELD ENGINE
-       ============================================================== */
+    /* --------------------------------------------------------------
+       4. INTERACTIVE STARFIELD BACKGROUND
+       -------------------------------------------------------------- */
     const bgCanvas = document.getElementById('bgCanvas');
     const bgCtx = bgCanvas.getContext('2d');
     let stars = [];
 
     function resizeBg() {
-      bgCanvas.width = window.innerWidth;
-      bgCanvas.height = window.innerHeight;
+      bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
       stars = [];
-      for (let i = 0; i < 70; i++) {
-        stars.push({
-          x: Math.random() * bgCanvas.width,
-          y: Math.random() * bgCanvas.height,
-          size: Math.random() * 2 + 0.5,
-          speed: Math.random() * 0.5 + 0.1
-        });
+      for (let i = 0; i < 80; i++) {
+        stars.push({ x: Math.random() * bgCanvas.width, y: Math.random() * bgCanvas.height, size: Math.random() * 2 + 0.5, speed: Math.random() * 0.6 + 0.2 });
       }
     }
     window.addEventListener('resize', resizeBg);
@@ -564,35 +468,40 @@
 
     function renderBg() {
       bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-      bgCtx.fillStyle = 'rgba(0, 243, 255, 0.4)';
+      bgCtx.fillStyle = 'rgba(0, 243, 255, 0.35)';
       stars.forEach(s => {
-        s.y -= s.speed;
-        if (s.y < 0) s.y = bgCanvas.height;
+        s.y -= s.speed; if (s.y < 0) s.y = bgCanvas.height;
         bgCtx.fillRect(s.x, s.y, s.size, s.size);
       });
       requestAnimationFrame(renderBg);
     }
     renderBg();
 
-    /* ==============================================================
-       5. PORTAL MODALS & CATEGORY FILTERING
-       ============================================================== */
-    function openModal(id) {
-      SFX.playHover();
-      document.getElementById(id).classList.add('active');
-      if (id === 'leaderboardModal') renderLeaderboard(activeLbTab);
-    }
+    /* --------------------------------------------------------------
+       5. GEOMETRY DASH SPACEWAVES NEO ENGINE
+       -------------------------------------------------------------- */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let currentGame = null, animId = null, isHolding = false, lastTime = 0;
 
+    window.addEventListener('keydown', e => { 
+      if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); if(!isHolding) WaveGame.onDirectionChange(); isHolding = true; handleInputDown(); }
+    });
+    window.addEventListener('keyup', e => { 
+      if (e.code === 'Space' || e.code === 'ArrowUp') { if(isHolding) WaveGame.onDirectionChange(); isHolding = false; }
+    });
+
+    canvas.addEventListener('mousedown', () => { WaveGame.onDirectionChange(); isHolding = true; handleInputDown(); });
+    canvas.addEventListener('mouseup', () => { WaveGame.onDirectionChange(); isHolding = false; });
+
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
     function closeModal(id) {
       document.getElementById(id).classList.remove('active');
-      if (id === 'gameModal') {
-        if (animId) cancelAnimationFrame(animId);
-        currentGame = null;
-      }
+      if (id === 'gameModal') { if (animId) cancelAnimationFrame(animId); currentGame = null; }
     }
 
     function filterCategory(cat, el) {
-      SFX.playHover();
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
       el.classList.add('active');
       document.querySelectorAll('.game-card').forEach(card => {
@@ -607,44 +516,17 @@
       });
     }
 
-    /* ==============================================================
-       6. GEOMETRY DASH WAVE ENGINE WITH REAL-TIME HIGHSCORE CELEBRATION
-       ============================================================== */
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    let currentGame = null;
-    let animId = null;
-    let isHolding = false;
-    let lastTime = 0;
-
-    window.addEventListener('keydown', e => { 
-      if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); isHolding = true; handleInputDown(); }
-    });
-    window.addEventListener('keyup', e => { 
-      if (e.code === 'Space' || e.code === 'ArrowUp') { isHolding = false; }
-    });
-
-    canvas.addEventListener('mousedown', () => { isHolding = true; handleInputDown(); });
-    canvas.addEventListener('mouseup', () => { isHolding = false; });
-
     function launchGame(gameKey) {
       openModal('gameModal');
       currentGame = gameKey;
       isHolding = false;
 
       if (gameKey === 'wave') {
-        document.getElementById('gameModalTitle').innerText = 'Geometry Dash: Wave Neo';
+        document.getElementById('gameModalTitle').innerText = '🔥 Spacewaves Neo GD Wave';
         WaveGame.init();
-      } else if (gameKey === 'cube') {
-        document.getElementById('gameModalTitle').innerText = 'Geometry Dash: Cube Runner';
-        CubeGame.init();
-      } else if (gameKey === 'breakout') {
-        document.getElementById('gameModalTitle').innerText = 'Neon Breakout';
-        BreakoutGame.init();
-      } else if (gameKey === 'snake') {
-        document.getElementById('gameModalTitle').innerText = 'Cyber Snake';
-        SnakeGame.init();
+      } else {
+        document.getElementById('gameModalTitle').innerText = 'Arcade Mode';
+        SimpleArcade.init();
       }
 
       lastTime = performance.now();
@@ -655,42 +537,39 @@
     function handleInputDown() {
       if (!currentGame) return;
       if (currentGame === 'wave') WaveGame.onDown();
-      if (currentGame === 'cube') CubeGame.onDown();
-      if (currentGame === 'breakout') BreakoutGame.onDown();
-      if (currentGame === 'snake') SnakeGame.onDown();
+      else SimpleArcade.onDown();
     }
 
     function masterLoop(now) {
       const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
-
       if (currentGame === 'wave') WaveGame.updateAndDraw(dt);
-      if (currentGame === 'cube') CubeGame.updateAndDraw(dt);
-      if (currentGame === 'breakout') BreakoutGame.updateAndDraw(dt);
-      if (currentGame === 'snake') SnakeGame.updateAndDraw(dt);
-
+      else SimpleArcade.updateAndDraw(dt);
       if (currentGame) animId = requestAnimationFrame(masterLoop);
     }
 
-    // GD WAVE ENGINE
+    /* SPACEWAVES NEO ULTRA ENGINE */
     const WaveGame = {
-      state: 'START', y: 260, speedY: 480, scrollSpeed: 480, score: 0,
-      trail: [], particles: [], obstacles: [],
+      state: 'START', y: 260, speedY: 520, scrollSpeed: 520, score: 0,
+      trail: [], particles: [], sparks: [], obstacles: [], shake: 0, hue: 0,
 
       init() {
         this.y = canvas.height / 2;
         this.score = 0;
         this.trail = [];
         this.particles = [];
+        this.sparks = [];
         this.obstacles = [];
+        this.shake = 0;
+        this.hue = 180;
         this.state = 'START';
-        for (let i = 0; i < 6; i++) this.spawnObstacle(700 + (i * 350));
+        for (let i = 0; i < 6; i++) this.spawnObstacle(750 + (i * 360));
       },
 
       spawnObstacle(x) {
-        const gap = 200;
-        const topH = Math.random() * (canvas.height - gap - 80) + 40;
-        this.obstacles.push({ x: x, width: 90, topH: topH, bottomH: canvas.height - topH - gap });
+        const gap = 190;
+        const topH = Math.random() * (canvas.height - gap - 90) + 45;
+        this.obstacles.push({ x: x, width: 95, topH: topH, bottomH: canvas.height - topH - gap });
       },
 
       onDown() {
@@ -699,105 +578,192 @@
         SFX.playJump();
       },
 
+      onDirectionChange() {
+        if (this.state !== 'PLAYING') return;
+        for (let i = 0; i < 12; i++) {
+          this.sparks.push({
+            x: 180, y: this.y,
+            vx: (Math.random() - 0.5) * 400,
+            vy: (Math.random() - 0.5) * 400,
+            size: Math.random() * 4 + 2,
+            life: 1.0
+          });
+        }
+      },
+
       updateAndDraw(dt) {
+        this.hue = (this.hue + dt * 40) % 360;
+
         if (this.state === 'PLAYING') {
           this.y += isHolding ? -this.speedY * dt : this.speedY * dt;
-          this.score += dt * 12;
+          this.score += dt * 15;
 
           this.trail.push({ x: 180, y: this.y });
-          if (this.trail.length > 22) this.trail.shift();
+          if (this.trail.length > 30) this.trail.shift();
           this.trail.forEach(t => t.x -= this.scrollSpeed * dt);
+
+          if (Math.random() > 0.3) {
+            this.particles.push({
+              x: 180, y: this.y,
+              vx: -this.scrollSpeed * 0.4,
+              vy: (Math.random() - 0.5) * 80,
+              life: 0.8
+            });
+          }
 
           for (let i = this.obstacles.length - 1; i >= 0; i--) {
             let obs = this.obstacles[i];
             obs.x -= this.scrollSpeed * dt;
 
-            if (180 + 10 > obs.x && 180 - 10 < obs.x + obs.width) {
-              if (this.y - 10 < obs.topH || this.y + 10 > canvas.height - obs.bottomH) {
+            if (180 + 12 > obs.x && 180 - 12 < obs.x + obs.width) {
+              if (this.y - 12 < obs.topH || this.y + 12 > canvas.height - obs.bottomH) {
                 this.triggerCrash();
               }
             }
 
             if (obs.x + obs.width < 0) {
               this.obstacles.splice(i, 1);
-              this.spawnObstacle(this.obstacles[this.obstacles.length - 1].x + 350);
+              this.spawnObstacle(this.obstacles[this.obstacles.length - 1].x + 360);
             }
           }
 
-          if (this.y <= 10 || this.y >= canvas.height - 10) this.triggerCrash();
+          if (this.y <= 12 || this.y >= canvas.height - 12) this.triggerCrash();
         }
 
-        // Draw
-        ctx.fillStyle = '#05050a';
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          let p = this.particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt * 2;
+          if (p.life <= 0) this.particles.splice(i, 1);
+        }
+        for (let i = this.sparks.length - 1; i >= 0; i--) {
+          let s = this.sparks[i]; s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt * 3;
+          if (s.life <= 0) this.sparks.splice(i, 1);
+        }
+
+        ctx.save();
+        if (this.shake > 0) {
+          ctx.translate((Math.random() - 0.5) * this.shake, (Math.random() - 0.5) * this.shake);
+          this.shake *= 0.9;
+        }
+
+        ctx.fillStyle = '#030308';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Render Spikes
-        ctx.fillStyle = 'rgba(255, 0, 85, 0.2)';
-        ctx.strokeStyle = '#ff0055';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = `hsla(${this.hue}, 80%, 50%, 0.08)`;
+        ctx.lineWidth = 2;
+        const offset = (this.score * 12) % 60;
+        for (let x = -offset; x < canvas.width; x += 60) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+        }
 
         this.obstacles.forEach(obs => {
-          ctx.beginPath(); ctx.moveTo(obs.x, 0); ctx.lineTo(obs.x + obs.width / 2, obs.topH); ctx.lineTo(obs.x + obs.width, 0); ctx.fill(); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(obs.x, canvas.height); ctx.lineTo(obs.x + obs.width / 2, canvas.height - obs.bottomH); ctx.lineTo(obs.x + obs.width, canvas.height); ctx.fill(); ctx.stroke();
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = `hsl(${this.hue}, 100%, 50%)`;
+          ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, 0.25)`;
+          ctx.strokeStyle = `hsl(${this.hue}, 100%, 60%)`;
+          ctx.lineWidth = 4;
+
+          ctx.beginPath();
+          ctx.moveTo(obs.x, 0);
+          ctx.lineTo(obs.x + obs.width / 2, obs.topH);
+          ctx.lineTo(obs.x + obs.width, 0);
+          ctx.fill(); ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(obs.x, canvas.height);
+          ctx.lineTo(obs.x + obs.width / 2, canvas.height - obs.bottomH);
+          ctx.lineTo(obs.x + obs.width, canvas.height);
+          ctx.fill(); ctx.stroke();
         });
 
-        // Wave Trail
         if (this.trail.length > 1 && this.state !== 'GAMEOVER') {
-          ctx.strokeStyle = '#00f3ff';
-          ctx.lineWidth = 6;
+          ctx.shadowBlur = 25;
+          ctx.shadowColor = `hsl(${this.hue}, 100%, 50%)`;
+          ctx.strokeStyle = `hsl(${this.hue}, 100%, 60%)`;
+          ctx.lineWidth = 8;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
           ctx.beginPath();
           ctx.moveTo(this.trail[0].x, this.trail[0].y);
           for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i].x, this.trail[i].y);
           ctx.stroke();
         }
 
-        // Wave Player Arrow
+        this.sparks.forEach(s => {
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = '#00f3ff';
+          ctx.fillStyle = `rgba(0, 243, 255, ${s.life})`;
+          ctx.fillRect(s.x, s.y, s.size, s.size);
+        });
+
         if (this.state !== 'GAMEOVER') {
+          ctx.shadowBlur = 25;
+          ctx.shadowColor = '#00f3ff';
           ctx.fillStyle = '#ffffff';
+
           ctx.save();
           ctx.translate(180, this.y);
           ctx.rotate(isHolding ? -Math.PI / 4 : Math.PI / 4);
-          ctx.beginPath(); ctx.moveTo(14, 0); ctx.lineTo(-12, -10); ctx.lineTo(-6, 0); ctx.lineTo(-12, 10); ctx.closePath(); ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(16, 0);
+          ctx.lineTo(-14, -12);
+          ctx.lineTo(-6, 0);
+          ctx.lineTo(-14, 12);
+          ctx.closePath();
+          ctx.fill();
           ctx.restore();
         }
 
-        ctx.fillStyle = '#fff';
-        ctx.font = '800 22px Outfit';
-        ctx.fillText(`DISTANCE: ${Math.floor(this.score)}m`, 30, 40);
+        ctx.restore();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 26px Outfit';
+        ctx.textAlign = 'left';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.fillText(`SPACEWAVES: ${Math.floor(this.score)}m`, 30, 45);
 
         if (this.state === 'START') {
-          ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = '#00f3ff'; ctx.font = '900 40px Outfit'; ctx.textAlign = 'center';
-          ctx.fillText('GEOMETRY DASH: WAVE NEO', canvas.width / 2, 230);
-          ctx.fillStyle = '#fff'; ctx.font = '600 18px Outfit';
-          ctx.fillText('Hold SPACE / CLICK to fly up diagonally. Release to fly down.', canvas.width / 2, 280);
+          ctx.fillStyle = 'rgba(3,3,8,0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#00f3ff'; ctx.font = '900 42px Outfit'; ctx.textAlign = 'center';
+          ctx.fillText('SPACEWAVES NEO', canvas.width / 2, 220);
+          ctx.fillStyle = '#ffffff'; ctx.font = '600 18px Outfit';
+          ctx.fillText('Hold SPACEBAR / CLICK to fly up diagonally. Release to fly down.', canvas.width / 2, 270);
+          ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillText('CLICK ANYWHERE TO LAUNCH', canvas.width / 2, 330);
         } else if (this.state === 'GAMEOVER') {
-          ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = '#ff0055'; ctx.font = '900 50px Outfit'; ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(3,3,8,0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#ff0055'; ctx.font = '900 52px Outfit'; ctx.textAlign = 'center';
           ctx.fillText('CRASHED!', canvas.width / 2, 210);
-          ctx.fillStyle = '#fff'; ctx.font = '700 24px Outfit';
+          ctx.fillStyle = '#ffffff'; ctx.font = '700 24px Outfit';
           ctx.fillText(`Distance: ${Math.floor(this.score)}m`, canvas.width / 2, 260);
+          ctx.fillStyle = '#00f3ff'; ctx.font = '600 18px Outfit';
+          ctx.fillText('Click to retry', canvas.width / 2, 320);
         }
       },
 
       triggerCrash() {
         this.state = 'GAMEOVER';
+        this.shake = 35;
         SFX.playCrash();
         const finalScore = Math.floor(this.score);
-        submitGlobalScore('wave', finalScore);
-        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+        GlobalStore.saveScore(currentUser, finalScore);
+        confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 } });
       }
     };
 
-    function initWaveGame() { WaveGame.init(); }
-
-    /* Other 3 mini engines simple handlers */
-    const CubeGame = { init(){}, onDown(){}, updateAndDraw(){} };
-    const BreakoutGame = { init(){}, onDown(){}, updateAndDraw(){} };
-    const SnakeGame = { init(){}, onDown(){}, updateAndDraw(){} };
-    function initCubeGame() { CubeGame.init(); }
-    function initBreakoutGame() { BreakoutGame.init(); }
-    function initSnakeGame() { SnakeGame.init(); }
+    /* SIMPLE ARCADE ENGINE */
+    const SimpleArcade = {
+      score: 0, state: 'PLAYING',
+      init() { this.score = 0; this.state = 'PLAYING'; },
+      onDown() { this.score += 10; SFX.playJump(); },
+      updateAndDraw() {
+        ctx.fillStyle = '#05050a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#00f3ff'; ctx.font = '900 36px Outfit'; ctx.textAlign = 'center';
+        ctx.fillText('CLASSIC ARCADE MODE', canvas.width / 2, 230);
+        ctx.fillStyle = '#fff'; ctx.font = '600 20px Outfit';
+        ctx.fillText(`Score: ${this.score} - Click to Gain Points!`, canvas.width / 2, 280);
+      }
+    };
   </script>
 </body>
 </html>
