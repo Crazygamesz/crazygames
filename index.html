@@ -3,26 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NEXUS ARCADE | Cyber Edition</title>
+  <title>Spacewaves.io | Global Cloud Edition</title>
   
-  <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
     :root {
-      --bg-base: #030307;
-      --bg-surface: rgba(13, 14, 22, 0.85);
-      --primary: #7c5cff;
-      --neon-cyan: #00f3ff;
-      --neon-pink: #ff0055;
-      --neon-gold: #ffcc00;
+      --bg-base: #110019;
+      --bg-surface: rgba(30, 5, 40, 0.85);
+      --sw-pink: #d60093;
+      --sw-dark-pink: #88005b;
+      --sw-light-pink: #f252c8;
       --text-main: #ffffff;
-      --text-muted: #8c90ad;
-      --border: rgba(255, 255, 255, 0.1);
-      --card-radius: 16px;
-      --transition: 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+      --text-muted: #d2a4dc;
+      --border: rgba(255, 255, 255, 0.2);
+      --transition: 0.2s ease;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; user-select: none; }
@@ -30,15 +27,10 @@
 
     #bgCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg-base); }
-    ::-webkit-scrollbar-thumb { background: #202234; border-radius: 10px; }
-
-    /* AUTH GATE (MANDATORY LOGIN) */
+    /* AUTHENTICATION GATE */
     #authGate {
       position: fixed; inset: 0; z-index: 1000;
-      background: rgba(3, 3, 7, 0.96);
-      backdrop-filter: blur(25px);
+      background: rgba(17, 0, 25, 0.96); backdrop-filter: blur(25px);
       display: flex; align-items: center; justify-content: center;
       transition: opacity 0.4s ease, visibility 0.4s ease;
     }
@@ -46,233 +38,218 @@
 
     .gate-box {
       width: 420px; max-width: 90%;
-      background: rgba(16, 18, 30, 0.95);
-      border: 1px solid rgba(0, 243, 255, 0.3);
+      background: rgba(45, 0, 60, 0.95);
+      border: 2px solid var(--sw-pink);
       border-radius: 24px; padding: 40px 32px;
-      box-shadow: 0 0 60px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 243, 255, 0.05);
-      text-align: center; position: relative; overflow: hidden;
+      box-shadow: 0 0 50px rgba(214, 0, 147, 0.4);
+      text-align: center;
     }
-    .gate-box::before {
-      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-      background: radial-gradient(circle, rgba(0, 243, 255, 0.12) 0%, transparent 60%);
-      pointer-events: none; animation: pulseGlow 4s ease-in-out infinite alternate;
-    }
+    .gate-logo { font-size: 32px; font-weight: 900; color: #fff; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .gate-logo i { color: var(--sw-light-pink); font-size: 38px; }
+    .gate-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; }
 
-    @keyframes pulseGlow {
-      0% { transform: scale(0.9); opacity: 0.6; }
-      100% { transform: scale(1.1); opacity: 1; }
-    }
-
-    .gate-logo { font-size: 34px; font-weight: 900; letter-spacing: 2px; color: #fff; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-    .gate-logo i { color: var(--neon-cyan); font-size: 40px; filter: drop-shadow(0 0 15px var(--neon-cyan)); }
-    .gate-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
-
-    .auth-form { display: flex; flex-direction: column; gap: 16px; text-align: left; position: relative; z-index: 2; }
-    .input-group label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--neon-cyan); letter-spacing: 1px; display: block; margin-bottom: 6px; }
+    .auth-form { display: flex; flex-direction: column; gap: 16px; text-align: left; }
+    .input-group label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--sw-light-pink); letter-spacing: 1px; display: block; margin-bottom: 6px; }
     .input-group input {
-      width: 100%; background: rgba(5, 5, 12, 0.85);
+      width: 100%; background: rgba(15, 0, 22, 0.85);
       border: 1px solid var(--border); border-radius: 12px;
       padding: 14px 16px; color: #fff; font-size: 15px; font-weight: 600; outline: none; transition: var(--transition);
     }
-    .input-group input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 18px rgba(0, 243, 255, 0.35); }
+    .input-group input:focus { border-color: var(--sw-light-pink); box-shadow: 0 0 18px rgba(242, 82, 200, 0.4); }
 
     .gate-btn {
-      background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--primary) 100%);
-      color: #000; font-weight: 900; font-size: 15px; text-transform: uppercase; letter-spacing: 1px;
+      background: #fff; color: #000; font-weight: 900; font-size: 15px; text-transform: uppercase; letter-spacing: 1px;
       padding: 16px; border: none; border-radius: 12px; cursor: pointer; margin-top: 10px;
-      transition: var(--transition); box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
+      transition: var(--transition); box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
       display: flex; align-items: center; justify-content: center; gap: 8px;
     }
-    .gate-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 0 35px var(--neon-cyan); color: #fff; }
+    .gate-btn:hover { background: var(--sw-light-pink); color: #fff; transform: translateY(-2px); box-shadow: 0 0 30px var(--sw-light-pink); }
 
-    /* MAIN APP LAYOUT */
+    /* LAYOUT */
     #appLayout { display: flex; height: 100vh; position: relative; z-index: 5; }
 
     .sidebar { width: 260px; background: var(--bg-surface); backdrop-filter: blur(20px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; flex-shrink: 0; }
     .brand { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 30px; padding: 0 8px; }
-    .brand i { color: var(--neon-cyan); font-size: 32px; filter: drop-shadow(0 0 12px var(--neon-cyan)); }
+    .brand i { color: var(--sw-light-pink); font-size: 32px; }
 
     .nav-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.5px; margin: 18px 0 8px 10px; }
     .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; color: var(--text-muted); font-weight: 600; font-size: 14px; cursor: pointer; transition: var(--transition); margin-bottom: 4px; }
-    .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; transform: translateX(3px); }
-    .nav-item.active { background: linear-gradient(90deg, rgba(0, 243, 255, 0.15) 0%, transparent 100%); color: var(--neon-cyan); border-left: 3px solid var(--neon-cyan); }
+    .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .nav-item.active { background: linear-gradient(90deg, rgba(214, 0, 147, 0.3) 0%, transparent 100%); color: var(--sw-light-pink); border-left: 3px solid var(--sw-light-pink); }
 
     .main-view { flex: 1; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
     
-    .header { position: sticky; top: 0; background: rgba(3, 3, 7, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 14px 35px; display: flex; justify-content: space-between; align-items: center; z-index: 50; }
-    .search-bar { display: flex; align-items: center; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; padding: 8px 16px; width: 340px; }
-    .search-bar input { background: transparent; border: none; outline: none; color: #fff; width: 100%; font-size: 14px; margin-left: 8px; }
+    .header { position: sticky; top: 0; background: rgba(17, 0, 25, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 14px 35px; display: flex; justify-content: space-between; align-items: center; z-index: 50; }
+    .live-status-pill { background: rgba(0, 255, 170, 0.15); border: 1px solid #00ffaa; color: #00ffaa; font-size: 12px; font-weight: 800; padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 8px; }
+    .pulse-dot { width: 8px; height: 8px; background: #00ffaa; border-radius: 50%; box-shadow: 0 0 10px #00ffaa; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
 
-    .user-badge { background: linear-gradient(135deg, rgba(124, 92, 255, 0.2) 0%, rgba(0, 243, 255, 0.1) 100%); border: 1px solid rgba(0, 243, 255, 0.3); border-radius: 25px; padding: 6px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: var(--transition); }
-    .user-badge:hover { border-color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
-    .user-avatar { width: 28px; height: 28px; background: var(--neon-cyan); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; }
+    .user-badge { background: rgba(214, 0, 147, 0.2); border: 1px solid var(--sw-pink); border-radius: 25px; padding: 6px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .user-avatar { width: 28px; height: 28px; background: var(--sw-light-pink); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; }
 
     .content { padding: 30px 35px; }
     
     .hero {
-      background: linear-gradient(135deg, rgba(124, 92, 255, 0.45) 0%, rgba(0, 243, 255, 0.25) 100%), url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80') center/cover;
-      height: 320px; border-radius: 24px; margin-bottom: 35px; position: relative; overflow: hidden; display: flex; align-items: flex-end; padding: 35px; border: 1px solid rgba(0, 243, 255, 0.35); box-shadow: 0 20px 50px rgba(0, 243, 255, 0.18);
+      background: linear-gradient(135deg, rgba(214, 0, 147, 0.6) 0%, rgba(45, 0, 60, 0.8) 100%), url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80') center/cover;
+      height: 280px; border-radius: 24px; margin-bottom: 35px; position: relative; overflow: hidden; display: flex; align-items: flex-end; padding: 35px; border: 2px solid var(--sw-pink); box-shadow: 0 10px 40px rgba(214, 0, 147, 0.3);
     }
-    .hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, var(--bg-base) 0%, transparent 100%); }
     .hero-content { position: relative; z-index: 2; }
-    .hero-tag { background: var(--neon-pink); color: #fff; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 10px; box-shadow: 0 0 12px var(--neon-pink); }
-    .hero h1 { font-size: 46px; font-weight: 900; margin-bottom: 8px; letter-spacing: -0.5px; text-shadow: 0 0 25px rgba(0,243,255,0.7); }
-    .hero p { font-size: 15px; color: #d0d0e0; max-width: 580px; margin-bottom: 22px; line-height: 1.5; }
+    .hero-tag { background: #fff; color: #000; font-size: 11px; font-weight: 900; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 10px; }
+    .hero h1 { font-size: 40px; font-weight: 900; margin-bottom: 8px; letter-spacing: -0.5px; text-shadow: 0 0 20px rgba(0,0,0,0.8); }
+    .hero p { font-size: 14px; color: #f0d0f8; max-width: 580px; margin-bottom: 20px; line-height: 1.5; }
     
     .btn-group { display: flex; gap: 12px; }
-    .play-btn { background: var(--neon-cyan); color: #000; padding: 14px 32px; border-radius: 30px; font-size: 14px; font-weight: 900; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; transition: var(--transition); box-shadow: 0 0 20px var(--neon-cyan); }
-    .play-btn:hover { background: #fff; transform: translateY(-2px) scale(1.03); box-shadow: 0 0 30px #fff; }
+    .play-btn { background: #fff; color: #000; padding: 14px 32px; border-radius: 30px; font-size: 14px; font-weight: 900; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; text-transform: uppercase; transition: var(--transition); box-shadow: 0 0 20px rgba(255, 255, 255, 0.4); }
+    .play-btn:hover { background: var(--sw-light-pink); color: #fff; transform: translateY(-2px); box-shadow: 0 0 30px var(--sw-light-pink); }
     
-    .leaderboard-btn { background: rgba(255, 255, 255, 0.08); color: #fff; border: 1px solid var(--border); padding: 14px 26px; border-radius: 30px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: var(--transition); backdrop-filter: blur(10px); }
-    .leaderboard-btn:hover { background: rgba(255,255,255,0.18); border-color: var(--neon-gold); color: var(--neon-gold); }
+    .leaderboard-btn { background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid var(--border); padding: 14px 26px; border-radius: 30px; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: var(--transition); }
+    .leaderboard-btn:hover { background: rgba(255,255,255,0.25); }
 
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .section-header h2 { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-    .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 22px; margin-bottom: 40px; }
-    
-    .game-card { background: var(--bg-surface); backdrop-filter: blur(12px); border-radius: var(--card-radius); overflow: hidden; position: relative; cursor: pointer; transition: var(--transition); border: 1px solid var(--border); aspect-ratio: 16/10; }
+    .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 22px; }
+    .game-card { background: var(--bg-surface); border-radius: 16px; overflow: hidden; position: relative; cursor: pointer; transition: var(--transition); border: 1px solid var(--border); aspect-ratio: 16/10; }
     .game-card img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition); }
-    .game-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 25px 14px 12px; background: linear-gradient(to top, rgba(3,3,7,0.95) 0%, rgba(3,3,7,0) 100%); }
+    .game-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 25px 14px 12px; background: linear-gradient(to top, rgba(17,0,25,0.95) 0%, rgba(17,0,25,0) 100%); }
     .game-info h4 { font-size: 16px; font-weight: 800; margin-bottom: 3px; }
-    .game-info .tag { font-size: 11px; background: rgba(0, 243, 255, 0.15); padding: 3px 8px; border-radius: 4px; display: inline-block; color: var(--neon-cyan); font-weight: 700; }
-
-    .game-card:hover { transform: translateY(-6px); border-color: var(--neon-cyan); box-shadow: 0 15px 30px rgba(0, 243, 255, 0.25); }
-    .game-card:hover img { transform: scale(1.08); filter: brightness(0.65); }
+    .game-info .tag { font-size: 11px; background: rgba(242, 82, 200, 0.2); padding: 3px 8px; border-radius: 4px; display: inline-block; color: var(--sw-light-pink); font-weight: 700; }
+    .game-card:hover { transform: translateY(-6px); border-color: var(--sw-light-pink); box-shadow: 0 10px 25px rgba(214, 0, 147, 0.4); }
 
     /* MODALS */
-    .modal { display: none; position: fixed; inset: 0; background: rgba(3, 3, 7, 0.92); backdrop-filter: blur(18px); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(17, 0, 25, 0.94); backdrop-filter: blur(18px); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
     .modal.active { display: flex; }
-    .modal-box { background: var(--bg-surface); border: 1px solid rgba(0, 243, 255, 0.3); border-radius: 20px; width: 680px; max-width: 92%; padding: 30px; position: relative; box-shadow: 0 0 50px rgba(0, 243, 255, 0.15); }
-    
-    .close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255, 255, 255, 0.08); color: #fff; border: 1px solid var(--border); width: 36px; height: 36px; border-radius: 50%; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
-    .close-btn:hover { background: var(--neon-pink); border-color: var(--neon-pink); transform: rotate(90deg); }
+    .modal-box { background: var(--bg-surface); border: 2px solid var(--sw-pink); border-radius: 20px; width: 680px; max-width: 92%; padding: 30px; position: relative; }
+    .close-btn { position: absolute; top: 20px; right: 20px; background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid var(--border); width: 36px; height: 36px; border-radius: 50%; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+    .close-btn:hover { background: #ff0055; border-color: #ff0055; }
 
     /* LEADERBOARD TABLE */
-    .lb-status { text-align: center; font-size: 13px; color: var(--neon-cyan); margin-top: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .lb-status { text-align: center; font-size: 13px; color: var(--sw-light-pink); margin-top: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .lb-table { width: 100%; border-collapse: collapse; margin-top: 18px; }
     .lb-table th { text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding: 10px 14px; border-bottom: 1px solid var(--border); letter-spacing: 1px; }
-    .lb-table td { padding: 12px 14px; font-size: 14px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .lb-table td { padding: 12px 14px; font-size: 14px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .rank-badge { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; }
-    .rank-1 { background: #ffcc00; color: #000; box-shadow: 0 0 12px #ffcc00; }
+    .rank-1 { background: #ffcc00; color: #000; }
     .rank-2 { background: #d0d0d0; color: #000; }
     .rank-3 { background: #cd7f32; color: #000; }
     .no-scores { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
 
-    /* GAME WINDOW */
-    #gameModal .modal-box { width: 980px; max-width: 95%; padding: 18px; background: #000; border-color: var(--neon-cyan); }
-    #gameCanvas { width: 100%; height: 520px; background: #000; border-radius: 12px; display: block; }
-    .game-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    /* GAME WINDOW & SPACEWAVES MENU OVERLAY */
+    #gameModal .modal-box { width: 960px; max-width: 96%; padding: 0; background: #000; border-color: #fff; overflow: hidden; position: relative; }
+    #gameCanvas { width: 100%; height: 540px; background: #ba0085; display: block; }
+    
+    /* SPACEWAVES START MENU (image_733a69.jpg match) */
+    #spacewavesMenu {
+      position: absolute; inset: 0; background: #ba0085; z-index: 10;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+    }
+    .sw-title { color: #fff; font-size: 32px; font-weight: 900; letter-spacing: 2px; margin-bottom: 25px; text-transform: uppercase; }
+    .sw-cards-container { display: flex; gap: 18px; width: 100%; max-width: 880px; justify-content: center; }
+    
+    .sw-card {
+      background: #ea50c8; border: 3px solid #ffffff; border-radius: 6px;
+      flex: 1; max-width: 260px; padding: 24px 16px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+      color: #000; min-height: 310px; box-shadow: 0 8px 0 rgba(0,0,0,0.2);
+    }
+    .sw-card h3 { font-size: 22px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; color: #000; }
+    .sw-card .sw-icon { font-size: 36px; margin: 10px 0; color: #000; }
+    .sw-card .sw-desc { font-size: 13px; font-weight: 800; color: #000; margin-bottom: 15px; line-height: 1.3; text-transform: lowercase; }
+    
+    .sw-btn {
+      width: 100%; background: #ffffff; border: 2px solid #000000; color: #000;
+      font-size: 15px; font-weight: 900; padding: 10px 0; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px; transition: 0.1s ease; margin-top: 6px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .sw-btn:hover { background: #000; color: #fff; }
+    .sw-card-selector { width: 100%; background: #ffffff; border: 2px solid #000; display: flex; justify-content: space-between; align-items: center; padding: 8px; font-weight: 900; margin-top: 6px; }
+
+    .sw-bottom-bar { display: flex; gap: 15px; margin-top: 22px; }
+    .sw-bottom-btn { background: #ba0085; border: 2px solid #ffffff; color: #fff; font-size: 14px; font-weight: 900; padding: 8px 20px; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    .sw-bottom-btn:hover { background: #fff; color: #000; }
+
+    /* SPACEWAVES TOP HUD (image_733b1f.jpg match) */
+    #spacewavesHud {
+      position: absolute; top: 12px; left: 16px; right: 16px; z-index: 5;
+      display: none; justify-content: space-between; align-items: center; pointer-events: none;
+    }
+    .sw-pause-btn { background: #d60093; border: 2px solid #ffffff; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 18px; cursor: pointer; pointer-events: auto; }
+    .sw-progress-container { width: 340px; max-width: 50%; height: 20px; background: rgba(0,0,0,0.3); border: 2px solid #ffffff; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .sw-progress-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: #e02db3; }
+    .sw-progress-text { position: relative; z-index: 2; font-size: 12px; font-weight: 900; color: #fff; text-shadow: 1px 1px 0 #000; }
   </style>
 </head>
 <body>
 
   <canvas id="bgCanvas"></canvas>
 
-  <!-- 1. MANDATORY ACCOUNT GATE -->
+  <!-- AUTHENTICATION GATE -->
   <div id="authGate">
     <div class="gate-box">
       <div class="gate-logo">
         <i class="ph-fill ph-intersect"></i>
-        <span>NEXUS</span>
+        <span>SPACEWAVES</span>
       </div>
-      <div class="gate-subtitle">Authentication Required</div>
+      <div class="gate-subtitle">Global Cloud Network</div>
       
       <form class="auth-form" onsubmit="handleAccountGate(event)">
         <div class="input-group">
-          <label>Create GamerTag / Username</label>
-          <input type="text" id="gateUsername" placeholder="e.g. WaveGod2026" required minlength="3" maxlength="15" autocomplete="off">
+          <label>GamerTag / Username</label>
+          <input type="text" id="gateUsername" placeholder="e.g. WaveMaster" required minlength="2" maxlength="14" autocomplete="off">
         </div>
-        <div class="input-group">
-          <label>Access Key / Password</label>
-          <input type="password" id="gatePassword" placeholder="••••••••••••" required minlength="4">
-        </div>
-        <button type="submit" class="gate-btn"><i class="ph-fill ph-key"></i> Enter Cyber System</button>
+        <button type="submit" class="gate-btn"><i class="ph-fill ph-planet"></i> Connect To Server</button>
       </form>
     </div>
   </div>
 
-  <!-- 2. MAIN APP PORTAL -->
+  <!-- MAIN APP LAYOUT -->
   <div id="appLayout">
     <nav class="sidebar">
       <div class="brand">
         <i class="ph-fill ph-intersect"></i>
-        <span>NEXUS</span>
+        <span>SPACEWAVES</span>
       </div>
 
-      <div class="nav-label">Explore</div>
-      <div class="nav-item active" onclick="filterCategory('all', this)"><i class="ph ph-squares-four"></i> All Games</div>
-      <div class="nav-item" onclick="filterCategory('rhythm', this)"><i class="ph ph-wave-sine"></i> GD & Wave</div>
-      <div class="nav-item" onclick="filterCategory('arcade', this)"><i class="ph ph-game-controller"></i> Classic Arcade</div>
+      <div class="nav-label">Mode Navigation</div>
+      <div class="nav-item active"><i class="ph ph-wave-sine"></i> Spacewaves.io</div>
       
-      <div class="nav-label">Community</div>
-      <div class="nav-item" onclick="openLeaderboard()"><i class="ph-fill ph-trophy"></i> Live Cloud Ranks</div>
-      <div class="nav-item" onclick="logoutAccount()"><i class="ph-fill ph-sign-out"></i> Switch Account</div>
+      <div class="nav-label">Global Leaderboard</div>
+      <div class="nav-item" onclick="openLeaderboard()"><i class="ph-fill ph-trophy"></i> Live Ranks</div>
+      <div class="nav-item" onclick="logoutAccount()"><i class="ph-fill ph-sign-out"></i> Switch Player</div>
     </nav>
 
     <main class="main-view">
       <header class="header">
-        <div class="search-bar">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="text" id="searchInput" placeholder="Search games..." onkeyup="searchGames()">
+        <div class="live-status-pill">
+          <div class="pulse-dot"></div> GLOBAL SERVER ONLINE
         </div>
         <div class="user-badge" onclick="openLeaderboard()">
-          <div class="user-avatar" id="headerAvatar">G</div>
+          <div class="user-avatar" id="headerAvatar">P</div>
           <div class="user-name" id="headerUsername">Player</div>
         </div>
       </header>
 
       <div class="content">
-        <!-- Hero Banner -->
         <div class="hero">
           <div class="hero-content">
-            <span class="hero-tag">🔥 SPACEWAVES ULTRA REBOOT</span>
-            <h1>GEOMETRY DASH: SPACEWAVES NEO</h1>
-            <p>Experience pure 45-degree Geometry Dash Wave velocity with evolving biomes, dual-layer glow trails, thruster exhaust, and live global cloud leaderboard syncing!</p>
+            <span class="hero-tag">⚡ INSTANT GLOBAL CLOUD SAVE</span>
+            <h1>SPACEWAVES.IO OFFICIAL RECREATION</h1>
+            <p>Features authentic 45° angle controls, sliding ceiling/floor physics, magenta crosshatch geometry, and cross-device synced high scores!</p>
             <div class="btn-group">
-              <button class="play-btn" onclick="launchGame('wave')">
-                <i class="ph-fill ph-play-circle"></i> Launch Spacewaves
+              <button class="play-btn" onclick="launchGame()">
+                <i class="ph-fill ph-play-circle"></i> Play Spacewaves
               </button>
               <button class="leaderboard-btn" onclick="openLeaderboard()">
-                <i class="ph-fill ph-trophy"></i> Cloud Ranks
+                <i class="ph-fill ph-trophy"></i> View Global Ranks
               </button>
             </div>
           </div>
         </div>
 
-        <div class="section-header">
-          <h2><i class="ph-fill ph-lightning" style="color:var(--neon-cyan)"></i> Playable Cyber Games</h2>
-        </div>
-        
-        <div class="game-grid" id="gameGrid">
-          <div class="game-card" data-category="rhythm" data-title="Spacewaves Neo Geometry Dash" onclick="launchGame('wave')">
+        <div class="game-grid">
+          <div class="game-card" onclick="launchGame()">
             <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80" alt="Spacewaves">
             <div class="game-info">
-              <h4>Spacewaves GD Wave</h4>
-              <span class="tag">Rhythm / Wave</span>
-            </div>
-          </div>
-
-          <div class="game-card" data-category="rhythm" data-title="Geometry Dash Cube Runner" onclick="launchGame('cube')">
-            <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80" alt="Cube Mode">
-            <div class="game-info">
-              <h4>GD: Cube Jump</h4>
-              <span class="tag">Platformer</span>
-            </div>
-          </div>
-
-          <div class="game-card" data-category="arcade" data-title="Neon Breakout" onclick="launchGame('breakout')">
-            <img src="https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?auto=format&fit=crop&w=600&q=80" alt="Neon Breakout">
-            <div class="game-info">
-              <h4>Neon Breakout</h4>
-              <span class="tag">Arcade</span>
-            </div>
-          </div>
-
-          <div class="game-card" data-category="arcade" data-title="Cyber Snake" onclick="launchGame('snake')">
-            <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80" alt="Cyber Snake">
-            <div class="game-info">
-              <h4>Cyber Snake</h4>
-              <span class="tag">Classic Arcade</span>
+              <h4>Spacewaves.io</h4>
+              <span class="tag">Authentic Controls</span>
             </div>
           </div>
         </div>
@@ -284,16 +261,16 @@
   <div class="modal" id="leaderboardModal">
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal('leaderboardModal')"><i class="ph ph-x"></i></button>
-      <h3 style="color:var(--neon-gold); font-size:24px; font-weight:900; display:flex; align-items:center; gap:10px;">
-        <i class="ph-fill ph-trophy"></i> Live Cloud Leaderboard
+      <h3 style="color:#fff; font-size:24px; font-weight:900; display:flex; align-items:center; gap:10px;">
+        <i class="ph-fill ph-trophy" style="color:var(--sw-light-pink)"></i> Global Live Leaderboard
       </h3>
-      <div class="lb-status" id="lbStatus"><i class="ph ph-circle-notch ph-spin"></i> Syncing with server...</div>
+      <div class="lb-status" id="lbStatus"><i class="ph ph-circle-notch ph-spin"></i> Polling cloud database...</div>
       <table class="lb-table">
         <thead>
           <tr>
             <th>Rank</th>
             <th>GamerTag</th>
-            <th>Spacewaves Score</th>
+            <th>High Score</th>
           </tr>
         </thead>
         <tbody id="leaderboardBody"></tbody>
@@ -304,19 +281,75 @@
   <!-- GAME PLAY MODAL -->
   <div class="modal" id="gameModal">
     <div class="modal-box">
-      <div class="game-modal-header">
-        <div style="font-size: 18px; font-weight: 900; color: var(--neon-cyan);" id="gameModalTitle">Playing</div>
-        <button class="close-btn" onclick="closeModal('gameModal')" style="position:static;"><i class="ph ph-x"></i></button>
+      <button class="close-btn" onclick="closeModal('gameModal')" style="z-index: 30; top: 12px; right: 16px;"><i class="ph ph-x"></i></button>
+      
+      <div id="spacewavesHud">
+        <div class="sw-pause-btn">P</div>
+        <div class="sw-progress-container">
+          <div class="sw-progress-fill" id="swProgressFill"></div>
+          <div class="sw-progress-text" id="swProgressText">0%</div>
+        </div>
+        <div style="width:38px;"></div>
       </div>
-      <canvas id="gameCanvas" width="960" height="520"></canvas>
+
+      <!-- EXACT START SCREEN (Matches image_733a69.jpg) -->
+      <div id="spacewavesMenu">
+        <div class="sw-title">SELECT A GAME MODE</div>
+        <div class="sw-cards-container">
+          <!-- Classic Card -->
+          <div class="sw-card">
+            <div>
+              <h3>CLASSIC</h3>
+              <div class="sw-icon"><i class="ph ph-flag-banner"></i></div>
+              <div class="sw-desc">reach the finish to complete levels</div>
+            </div>
+            <div style="width:100%;">
+              <button class="sw-btn">SELECT LEVEL</button>
+              <button class="sw-btn" onclick="startSpacewavesMode('classic')">START ▶</button>
+            </div>
+          </div>
+          <!-- Endless Card -->
+          <div class="sw-card">
+            <div>
+              <h3>ENDLESS</h3>
+              <div class="sw-icon" style="font-size:28px; font-weight:900; margin:16px 0;">0m</div>
+              <div class="sw-desc">go as far as possible and set a highscore</div>
+            </div>
+            <div style="width:100%;">
+              <button class="sw-btn" onclick="startSpacewavesMode('endless')">START ▶</button>
+            </div>
+          </div>
+          <!-- Race Card -->
+          <div class="sw-card">
+            <div>
+              <h3>RACE</h3>
+              <div class="sw-icon"><i class="ph ph-flag-checkered"></i></div>
+              <div class="sw-desc">reach the finish before others</div>
+            </div>
+            <div style="width:100%;">
+              <div class="sw-card-selector">
+                <i class="ph ph-caret-left"></i> EASY <i class="ph ph-caret-right"></i>
+              </div>
+              <button class="sw-btn" onclick="startSpacewavesMode('race')">START ▶</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sw-bottom-bar">
+          <button class="sw-bottom-btn"><i class="ph-fill ph-navigation-arrow"></i> SKIN</button>
+          <button class="sw-bottom-btn"><i class="ph-fill ph-gear-six"></i> SETTINGS</button>
+        </div>
+      </div>
+
+      <canvas id="gameCanvas" width="960" height="540"></canvas>
     </div>
   </div>
 
   <script>
     /* --------------------------------------------------------------
-       1. MANDATORY ACCOUNT AUTHENTICATION SYSTEM
+       1. GLOBAL USER ACCOUNT AUTHENTICATION
        -------------------------------------------------------------- */
-    let currentUser = localStorage.getItem('nexus_user');
+    let currentUser = localStorage.getItem('spacewaves_global_user');
 
     function checkAuth() {
       if (!currentUser) {
@@ -331,157 +364,139 @@
     function handleAccountGate(e) {
       e.preventDefault();
       const user = document.getElementById('gateUsername').value.trim();
-      if (user.length >= 3) {
+      if (user.length >= 2) {
         currentUser = user;
-        localStorage.setItem('nexus_user', currentUser);
-        SFX.playSuccess();
+        localStorage.setItem('spacewaves_global_user', currentUser);
         checkAuth();
       }
     }
 
     function logoutAccount() {
-      localStorage.removeItem('nexus_user');
+      localStorage.removeItem('spacewaves_global_user');
       currentUser = null;
       checkAuth();
     }
-
     checkAuth();
 
     /* --------------------------------------------------------------
-       2. REAL LIVE CLOUD SERVER LEADERBOARD INTEGRATION
+       2. REAL-TIME CROSS-DEVICE CLOUD DATABASE BACKEND
        -------------------------------------------------------------- */
-    const SERVER_ENDPOINT = 'https://nexus-arcade-default-rtdb.firebaseio.com/leaderboard.json';
+    // Firebase Realtime Database Public Cloud REST Endpoint
+    const CLOUD_DB_URL = 'https://spacewaves-io-default-rtdb.firebaseio.com/leaderboard';
 
-    const CloudStore = {
-      async fetchScores() {
+    const GlobalCloudStore = {
+      // Fetch all entries from shared cloud
+      async fetchGlobalScores() {
         try {
-          const res = await fetch(SERVER_ENDPOINT);
-          if (!res.ok) throw new Error('Network response failed');
+          const res = await fetch(`${CLOUD_DB_URL}.json`);
+          if (!res.ok) throw new Error('Cloud HTTP Error');
           const data = await res.json();
           if (!data) return [];
           
-          let list = [];
-          if (Array.isArray(data)) {
-            list = data.filter(Boolean);
-          } else {
-            list = Object.values(data);
-          }
+          let list = Object.keys(data).map(key => ({
+            id: key,
+            name: data[key].name,
+            score: Number(data[key].score)
+          }));
+          
           return list.sort((a, b) => b.score - a.score);
         } catch (err) {
-          console.warn('Cloud leaderboard fetch fallback:', err);
-          let local = JSON.parse(localStorage.getItem('nexus_offline_scores')) || [];
-          return local.sort((a, b) => b.score - a.score);
+          console.warn('Fallback to cached score storage:', err);
+          return JSON.parse(localStorage.getItem('spacewaves_cache') || '[]').sort((a,b)=>b.score-a.score);
         }
       },
 
-      async postScore(name, score) {
+      // Instant post to cloud database
+      async postScoreInstant(username, score) {
         try {
-          let currentScores = await this.fetchScores();
-          let existingIndex = currentScores.findIndex(item => item.name === name);
-          
-          if (existingIndex !== -1) {
-            if (score > currentScores[existingIndex].score) {
-              currentScores[existingIndex].score = score;
+          const allScores = await this.fetchGlobalScores();
+          const existing = allScores.find(item => item.name.toLowerCase() === username.toLowerCase());
+
+          if (existing) {
+            // Only update if current score is higher
+            if (score > existing.score) {
+              await fetch(`${CLOUD_DB_URL}/${existing.id}.json`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ score: score, updated: Date.now() })
+              });
             }
           } else {
-            currentScores.push({ name: name, score: score, timestamp: Date.now() });
+            // New player entry
+            await fetch(`${CLOUD_DB_URL}.json`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: username, score: score, timestamp: Date.now() })
+            });
           }
-
-          currentScores.sort((a, b) => b.score - a.score);
-          currentScores = currentScores.slice(0, 50);
-
-          await fetch(SERVER_ENDPOINT, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(currentScores)
-          });
+          this.refreshUI();
         } catch (err) {
-          console.warn('Cloud save fallback to LocalStorage:', err);
-          let local = JSON.parse(localStorage.getItem('nexus_offline_scores')) || [];
-          let existing = local.find(item => item.name === name);
-          if (existing) {
-            if (score > existing.score) existing.score = score;
-          } else {
-            local.push({ name: name, score: score });
-          }
-          localStorage.setItem('nexus_offline_scores', JSON.stringify(local));
+          console.error('Instant cloud save failed, storing locally:', err);
+          let local = JSON.parse(localStorage.getItem('spacewaves_cache') || '[]');
+          let found = local.find(i => i.name === username);
+          if (found) { if (score > found.score) found.score = score; }
+          else local.push({ name: username, score: score });
+          localStorage.setItem('spacewaves_cache', JSON.stringify(local));
         }
+      },
+
+      async refreshUI() {
+        const statusEl = document.getElementById('lbStatus');
+        const tbody = document.getElementById('leaderboardBody');
+        if (!tbody) return;
+
+        const scores = await this.fetchGlobalScores();
+        if (!scores || scores.length === 0) {
+          statusEl.innerHTML = '<i class="ph ph-cloud-check"></i> Connected to Global Network';
+          tbody.innerHTML = `<tr><td colspan="3" class="no-scores">No scores on global database yet. Set the first record!</td></tr>`;
+          return;
+        }
+
+        statusEl.innerHTML = '<i class="ph ph-cloud-check" style="color:var(--sw-light-pink)"></i> Synced Across All Active Devices';
+        tbody.innerHTML = '';
+        scores.slice(0, 50).forEach((item, index) => {
+          let rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+          let isSelf = currentUser && item.name.toLowerCase() === currentUser.toLowerCase();
+          tbody.innerHTML += `
+            <tr>
+              <td><div class="rank-badge ${rankClass}">${index + 1}</div></td>
+              <td style="color: ${isSelf ? 'var(--sw-light-pink)' : '#fff'}">${item.name} ${isSelf ? '★ (You)' : ''}</td>
+              <td style="color: #ffcc00; font-weight: 800;">${item.score}%</td>
+            </tr>
+          `;
+        });
       }
     };
 
-    async function openLeaderboard() {
-      SFX.playHover();
-      document.getElementById('leaderboardModal').classList.add('active');
-      const statusEl = document.getElementById('lbStatus');
-      const tbody = document.getElementById('leaderboardBody');
-      
-      statusEl.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> Fetching live scores from cloud server...';
-      tbody.innerHTML = '';
-      
-      const scores = await CloudStore.fetchScores();
-      
-      if (!scores || scores.length === 0) {
-        statusEl.innerHTML = '<i class="ph ph-cloud-check"></i> Connected to Live Server';
-        tbody.innerHTML = `<tr><td colspan="3" class="no-scores"><i class="ph-fill ph-ghost" style="font-size:28px; display:block; margin-bottom:8px;"></i>No players on the leaderboard yet!<br>Play Spacewaves Neo to record the first global score.</td></tr>`;
-        return;
+    // Auto-Poll Leaderboard every 3.5 seconds across devices
+    setInterval(() => {
+      if (document.getElementById('leaderboardModal').classList.contains('active')) {
+        GlobalCloudStore.refreshUI();
       }
+    }, 3500);
 
-      statusEl.innerHTML = '<i class="ph ph-cloud-check" style="color:var(--neon-cyan)"></i> Live Cloud Sync Active';
-      tbody.innerHTML = '';
-      scores.forEach((item, index) => {
-        let rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
-        tbody.innerHTML += `
-          <tr>
-            <td><div class="rank-badge ${rankClass}">${index + 1}</div></td>
-            <td style="color: ${item.name === currentUser ? 'var(--neon-cyan)' : '#fff'}">${item.name} ${item.name === currentUser ? '(You)' : ''}</td>
-            <td style="color: var(--neon-gold); font-weight: 800;">${item.score}m</td>
-          </tr>
-        `;
-      });
+    function openLeaderboard() {
+      document.getElementById('leaderboardModal').classList.add('active');
+      document.getElementById('lbStatus').innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> Loading Global Scores...';
+      GlobalCloudStore.refreshUI();
     }
 
     /* --------------------------------------------------------------
-       3. ADVANCED SYNTHESIZED AUDIO SFX
+       3. SYNTHESIZED SOUND SYSTEM
        -------------------------------------------------------------- */
     const SFX = {
       ctx: null,
       init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
-      playHover() {
+      playClick() {
         try {
           this.init();
           let osc = this.ctx.createOscillator(), g = this.ctx.createGain();
           osc.connect(g); g.connect(this.ctx.destination);
-          osc.frequency.setValueAtTime(400, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.04);
-          g.gain.setValueAtTime(0.02, this.ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
-          osc.start(); osc.stop(this.ctx.currentTime + 0.04);
-        } catch(e){}
-      },
-      playJump() {
-        try {
-          this.init();
-          let osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-          osc.connect(g); g.connect(this.ctx.destination);
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(320, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.09);
-          g.gain.setValueAtTime(0.12, this.ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.09);
-          osc.start(); osc.stop(this.ctx.currentTime + 0.09);
-        } catch(e){}
-      },
-      playDive() {
-        try {
-          this.init();
-          let osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-          osc.connect(g); g.connect(this.ctx.destination);
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(220, this.ctx.currentTime + 0.09);
-          g.gain.setValueAtTime(0.1, this.ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.09);
-          osc.start(); osc.stop(this.ctx.currentTime + 0.09);
+          osc.frequency.setValueAtTime(450, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(750, this.ctx.currentTime + 0.05);
+          g.gain.setValueAtTime(0.08, this.ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.05);
         } catch(e){}
       },
       playCrash() {
@@ -490,403 +505,369 @@
           let osc = this.ctx.createOscillator(), g = this.ctx.createGain();
           osc.connect(g); g.connect(this.ctx.destination);
           osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(220, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(20, this.ctx.currentTime + 0.45);
-          g.gain.setValueAtTime(0.3, this.ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
-          osc.start(); osc.stop(this.ctx.currentTime + 0.45);
-        } catch(e){}
-      },
-      playSuccess() {
-        try {
-          this.init();
-          let now = this.ctx.currentTime;
-          [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-            let osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-            osc.connect(g); g.connect(this.ctx.destination);
-            osc.frequency.setValueAtTime(freq, now + idx * 0.06);
-            g.gain.setValueAtTime(0.08, now + idx * 0.06);
-            g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.15);
-            osc.start(now + idx * 0.06);
-            osc.stop(now + idx * 0.06 + 0.15);
-          });
+          osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.35);
+          g.gain.setValueAtTime(0.25, this.ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.35);
         } catch(e){}
       }
     };
 
     /* --------------------------------------------------------------
-       4. INTERACTIVE STARFIELD BACKGROUND
+       4. BACKGROUND PARTICLES
        -------------------------------------------------------------- */
     const bgCanvas = document.getElementById('bgCanvas');
     const bgCtx = bgCanvas.getContext('2d');
     let stars = [];
-
     function resizeBg() {
       bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
-      stars = [];
-      for (let i = 0; i < 80; i++) {
-        stars.push({ x: Math.random() * bgCanvas.width, y: Math.random() * bgCanvas.height, size: Math.random() * 2 + 0.5, speed: Math.random() * 0.6 + 0.2 });
-      }
+      stars = Array.from({length: 60}, () => ({ x: Math.random() * bgCanvas.width, y: Math.random() * bgCanvas.height, size: Math.random() * 2 + 0.5, speed: Math.random() * 0.4 + 0.1 }));
     }
     window.addEventListener('resize', resizeBg);
     resizeBg();
-
     function renderBg() {
       bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-      bgCtx.fillStyle = 'rgba(0, 243, 255, 0.35)';
-      stars.forEach(s => {
-        s.y -= s.speed; if (s.y < 0) s.y = bgCanvas.height;
-        bgCtx.fillRect(s.x, s.y, s.size, s.size);
-      });
+      bgCtx.fillStyle = 'rgba(242, 82, 200, 0.25)';
+      stars.forEach(s => { s.y -= s.speed; if (s.y < 0) s.y = bgCanvas.height; bgCtx.fillRect(s.x, s.y, s.size, s.size); });
       requestAnimationFrame(renderBg);
     }
     renderBg();
 
     /* --------------------------------------------------------------
-       5. GEOMETRY DASH SPACEWAVES ULTRA ENGINE
+       5. SPACEWAVES GAME ENGINE
        -------------------------------------------------------------- */
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    
-    let currentGame = null, animId = null, isHolding = false, lastTime = 0;
+    let isHolding = false, animId = null, lastTime = 0;
 
-    window.addEventListener('keydown', e => { 
-      if (e.code === 'Space' || e.code === 'ArrowUp') { 
-        e.preventDefault(); 
-        if(!isHolding) { isHolding = true; WaveGame.onDirectionChange(true); handleInputDown(); }
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        if (!e.repeat) { isHolding = true; Spacewaves.onPress(); }
       }
     });
-    window.addEventListener('keyup', e => { 
-      if (e.code === 'Space' || e.code === 'ArrowUp') { 
-        if(isHolding) { isHolding = false; WaveGame.onDirectionChange(false); }
-      }
+    window.addEventListener('keyup', e => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') { isHolding = false; }
     });
 
-    canvas.addEventListener('mousedown', () => { 
-      if(!isHolding) { isHolding = true; WaveGame.onDirectionChange(true); handleInputDown(); }
-    });
-    canvas.addEventListener('mouseup', () => { 
-      if(isHolding) { isHolding = false; WaveGame.onDirectionChange(false); }
-    });
+    canvas.addEventListener('mousedown', () => { isHolding = true; Spacewaves.onPress(); });
+    canvas.addEventListener('mouseup', () => { isHolding = false; });
 
     function openModal(id) { document.getElementById(id).classList.add('active'); }
     function closeModal(id) {
       document.getElementById(id).classList.remove('active');
-      if (id === 'gameModal') { if (animId) cancelAnimationFrame(animId); currentGame = null; }
-    }
-
-    function filterCategory(cat, el) {
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      el.classList.add('active');
-      document.querySelectorAll('.game-card').forEach(card => {
-        card.style.display = (cat === 'all' || card.dataset.category === cat) ? 'block' : 'none';
-      });
-    }
-
-    function searchGames() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
-      document.querySelectorAll('.game-card').forEach(card => {
-        card.style.display = card.dataset.title.toLowerCase().includes(q) ? 'block' : 'none';
-      });
-    }
-
-    function launchGame(gameKey) {
-      openModal('gameModal');
-      currentGame = gameKey;
-      isHolding = false;
-
-      if (gameKey === 'wave') {
-        document.getElementById('gameModalTitle').innerText = '🔥 Spacewaves Neo GD Wave';
-        WaveGame.init();
-      } else {
-        document.getElementById('gameModalTitle').innerText = 'Arcade Mode';
-        SimpleArcade.init();
+      if (id === 'gameModal') {
+        if (animId) cancelAnimationFrame(animId);
+        document.getElementById('spacewavesMenu').style.display = 'flex';
+        document.getElementById('spacewavesHud').style.display = 'none';
       }
+    }
 
+    function launchGame() {
+      openModal('gameModal');
+      document.getElementById('spacewavesMenu').style.display = 'flex';
+      document.getElementById('spacewavesHud').style.display = 'none';
+    }
+
+    function startSpacewavesMode(mode) {
+      SFX.playClick();
+      document.getElementById('spacewavesMenu').style.display = 'none';
+      document.getElementById('spacewavesHud').style.display = 'flex';
+      Spacewaves.init();
       lastTime = performance.now();
       if (animId) cancelAnimationFrame(animId);
-      animId = requestAnimationFrame(masterLoop);
+      animId = requestAnimationFrame(gameLoop);
     }
 
-    function handleInputDown() {
-      if (!currentGame) return;
-      if (currentGame === 'wave') WaveGame.onDown();
-      else SimpleArcade.onDown();
-    }
-
-    function masterLoop(now) {
-      const dt = Math.min((now - lastTime) / 1000, 0.1);
+    function gameLoop(now) {
+      const dt = Math.min((now - lastTime) / 1000, 0.08);
       lastTime = now;
-      if (currentGame === 'wave') WaveGame.updateAndDraw(dt);
-      else SimpleArcade.updateAndDraw(dt);
-      if (currentGame) animId = requestAnimationFrame(masterLoop);
+      Spacewaves.updateAndDraw(dt);
+      if (Spacewaves.active) animId = requestAnimationFrame(gameLoop);
     }
 
-    /* SPACEWAVES ULTRA ENGINE */
-    const WaveGame = {
-      state: 'START', y: 260, speedY: 560, scrollSpeed: 560, score: 0,
-      trail: [], particles: [], sparks: [], obstacles: [], shake: 0, 
-      hue: 180, targetHue: 180, angle: 0, currentAngle: 0,
-
-      biomes: [
-        { name: "CYBER NEON", hue: 180, bg: "#03030e" },
-        { name: "ELECTRIC PURPLE", hue: 280, bg: "#090312" },
-        { name: "INFERNO RED", hue: 350, bg: "#120305" },
-        { name: "GOLD VOID", hue: 45, bg: "#120f03" }
-      ],
+    const Spacewaves = {
+      active: false,
+      state: 'PLAYING',
+      x: 180,
+      y: 380,
+      
+      /* SPEED PACING FIX: Smooth, controlled wave physics */
+      speedX: 240,       // Forward movement
+      speedY: 240,       // Up/Down speed for exact 45-degree angle trajectory
+      
+      topSurfaceY: 60,   // Ceiling
+      bottomSurfaceY: 460,// Floor
+      
+      angle: 0,
+      trail: [],
+      distance: 0,
+      maxDistance: 2600, // Distance to reach 100% completion
+      obstacles: [],
 
       init() {
-        this.y = canvas.height / 2;
-        this.score = 0;
-        this.trail = [];
-        this.particles = [];
-        this.sparks = [];
-        this.obstacles = [];
-        this.shake = 0;
-        this.hue = 180;
-        this.targetHue = 180;
+        this.active = true;
+        this.state = 'PLAYING';
+        this.y = this.bottomSurfaceY;
+        this.distance = 0;
         this.angle = 0;
-        this.currentAngle = 0;
-        this.state = 'START';
-        for (let i = 0; i < 6; i++) this.spawnObstacle(750 + (i * 360));
+        this.trail = [];
+        this.generateLevel();
       },
 
-      spawnObstacle(x) {
-        const gap = 185;
-        const topH = Math.random() * (canvas.height - gap - 90) + 45;
-        this.obstacles.push({ x: x, width: 95, topH: topH, bottomH: canvas.height - topH - gap });
+      generateLevel() {
+        this.obstacles = [];
+        let posX = 800;
+        while (posX < 8500) {
+          let type = Math.floor(Math.random() * 3);
+          if (type === 0) {
+            this.obstacles.push({ type: 'spike_bottom', x: posX, count: Math.floor(Math.random() * 3) + 2 });
+            posX += 450;
+          } else if (type === 1) {
+            let h = 90 + Math.random() * 80;
+            let w = 220 + Math.random() * 200;
+            this.obstacles.push({ type: 'block', x: posX, y: this.bottomSurfaceY - h, w: w, h: h });
+            if (Math.random() > 0.4) {
+              this.obstacles.push({ type: 'spike_block', x: posX + 40, y: this.bottomSurfaceY - h, count: 2 });
+            }
+            posX += w + 380;
+          } else {
+            this.obstacles.push({ type: 'spike_top', x: posX, count: 3 });
+            posX += 400;
+          }
+        }
       },
 
-      onDown() {
-        if (this.state === 'START') this.state = 'PLAYING';
-        if (this.state === 'GAMEOVER') this.init();
-      },
-
-      onDirectionChange(isClimbing) {
-        if (this.state !== 'PLAYING') return;
-        if (isClimbing) SFX.playJump();
-        else SFX.playDive();
-
-        for (let i = 0; i < 16; i++) {
-          this.sparks.push({
-            x: 180, y: this.y,
-            vx: -300 + (Math.random() - 0.5) * 400,
-            vy: (Math.random() - 0.5) * 500,
-            size: Math.random() * 5 + 2,
-            life: 0.7
-          });
+      onPress() {
+        if (this.state === 'GAMEOVER') {
+          this.init();
         }
       },
 
       updateAndDraw(dt) {
-        const currentBiomeIdx = Math.min(Math.floor(this.score / 300), this.biomes.length - 1);
-        const biome = this.biomes[currentBiomeIdx];
-        this.targetHue = biome.hue;
-        this.hue += (this.targetHue - this.hue) * dt * 3;
-
         if (this.state === 'PLAYING') {
-          this.y += isHolding ? -this.speedY * dt : this.speedY * dt;
-          this.score += dt * 18;
+          this.distance += this.speedX * dt;
 
-          this.angle = isHolding ? -Math.PI / 4 : Math.PI / 4;
-          this.currentAngle += (this.angle - this.currentAngle) * 18 * dt;
+          let currentGround = this.bottomSurfaceY;
+          let currentCeil = this.topSurfaceY;
 
-          this.trail.push({ x: 180, y: this.y });
-          if (this.trail.length > 35) this.trail.shift();
-          this.trail.forEach(t => t.x -= this.scrollSpeed * dt);
-
-          if (Math.random() > 0.1) {
-            this.particles.push({
-              x: 180 - Math.cos(this.currentAngle) * 15,
-              y: this.y - Math.sin(this.currentAngle) * 15,
-              vx: -this.scrollSpeed * 0.5 + (Math.random() - 0.5) * 80,
-              vy: (Math.random() - 0.5) * 100,
-              size: Math.random() * 4 + 2,
-              life: 0.6
-            });
-          }
-
-          for (let i = this.obstacles.length - 1; i >= 0; i--) {
-            let obs = this.obstacles[i];
-            obs.x -= this.scrollSpeed * dt;
-
-            if (180 + 12 > obs.x && 180 - 12 < obs.x + obs.width) {
-              if (this.y - 12 < obs.topH || this.y + 12 > canvas.height - obs.bottomH) {
-                this.triggerCrash();
+          this.obstacles.forEach(obs => {
+            if (obs.type === 'block') {
+              let obsScreenX = obs.x - this.distance + this.x;
+              if (this.x >= obsScreenX && this.x <= obsScreenX + obs.w) {
+                currentGround = obs.y;
               }
             }
+          });
 
-            if (obs.x + obs.width < 0) {
-              this.obstacles.splice(i, 1);
-              this.spawnObstacle(this.obstacles[this.obstacles.length - 1].x + 360);
+          // Wave mechanics: Hold = UP at 45 deg, Release = DOWN at 45 deg
+          if (isHolding) {
+            this.y -= this.speedY * dt;
+            if (this.y <= currentCeil) {
+              this.y = currentCeil;
+              this.angle = 0; // Flat slide on ceiling
+            } else {
+              this.angle = -Math.PI / 4; // -45 degrees
+            }
+          } else {
+            this.y += this.speedY * dt;
+            if (this.y >= currentGround) {
+              this.y = currentGround;
+              this.angle = 0; // Flat slide on floor/platform
+            } else {
+              this.angle = Math.PI / 4; // +45 degrees
             }
           }
 
-          if (this.y <= 12 || this.y >= canvas.height - 12) this.triggerCrash();
+          // Trail line recording
+          this.trail.push({ x: this.x, y: this.y, worldX: this.distance });
+          if (this.trail.length > 80) this.trail.shift();
+
+          // Check collisions
+          this.checkCollisions(currentGround);
+
+          // Update Progress HUD
+          let progress = Math.min(100, Math.floor((this.distance / this.maxDistance) * 100));
+          document.getElementById('swProgressFill').style.width = `${progress}%`;
+          document.getElementById('swProgressText').innerText = `${progress}%`;
+
+          // Win Condition
+          if (progress >= 100) {
+            this.triggerWin();
+          }
         }
 
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-          let p = this.particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt * 2;
-          if (p.life <= 0) this.particles.splice(i, 1);
-        }
-        for (let i = this.sparks.length - 1; i >= 0; i--) {
-          let s = this.sparks[i]; s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt * 3;
-          if (s.life <= 0) this.sparks.splice(i, 1);
-        }
-
-        ctx.save();
-        if (this.shake > 0) {
-          ctx.translate((Math.random() - 0.5) * this.shake, (Math.random() - 0.5) * this.shake);
-          this.shake *= 0.9;
-        }
-
-        ctx.fillStyle = biome.bg;
+        /* RENDERING (Spacewaves Magenta Theme) */
+        ctx.fillStyle = '#ba0085';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.strokeStyle = `hsla(${this.hue}, 80%, 50%, 0.12)`;
-        ctx.lineWidth = 2;
-        const gridOffset = (this.score * 15) % 60;
-        for (let x = -gridOffset; x < canvas.width; x += 60) {
-          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-        }
-        for (let y = 0; y < canvas.height; y += 60) {
-          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-        }
+        // Ceiling & Floor terrain blocks
+        this.drawTerrainBlock(0, 0, canvas.width, this.topSurfaceY);
+        this.drawTerrainBlock(0, this.bottomSurfaceY, canvas.width, canvas.height - this.bottomSurfaceY);
 
+        // Level obstacles
         this.obstacles.forEach(obs => {
-          ctx.shadowBlur = 25;
-          ctx.shadowColor = `hsl(${this.hue}, 100%, 50%)`;
-          ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, 0.22)`;
-          ctx.strokeStyle = `hsl(${this.hue}, 100%, 65%)`;
-          ctx.lineWidth = 4;
-
-          ctx.beginPath();
-          ctx.moveTo(obs.x, 0);
-          ctx.lineTo(obs.x + obs.width / 2, obs.topH);
-          ctx.lineTo(obs.x + obs.width, 0);
-          ctx.fill(); ctx.stroke();
-
-          ctx.beginPath();
-          ctx.moveTo(obs.x, canvas.height);
-          ctx.lineTo(obs.x + obs.width / 2, canvas.height - obs.bottomH);
-          ctx.lineTo(obs.x + obs.width, canvas.height);
-          ctx.fill(); ctx.stroke();
+          let screenX = obs.x - this.distance + this.x;
+          if (screenX > -300 && screenX < canvas.width + 300) {
+            if (obs.type === 'block') {
+              this.drawTerrainBlock(screenX, obs.y, obs.w, obs.h);
+            } else if (obs.type === 'spike_bottom') {
+              for (let i = 0; i < obs.count; i++) {
+                this.drawSpike(screenX + i * 32, this.bottomSurfaceY, 32, 'up');
+              }
+            } else if (obs.type === 'spike_top') {
+              for (let i = 0; i < obs.count; i++) {
+                this.drawSpike(screenX + i * 32, this.topSurfaceY, 32, 'down');
+              }
+            } else if (obs.type === 'spike_block') {
+              for (let i = 0; i < obs.count; i++) {
+                this.drawSpike(screenX + i * 32, obs.y, 32, 'up');
+              }
+            }
+          }
         });
 
-        if (this.trail.length > 1 && this.state !== 'GAMEOVER') {
-          ctx.shadowBlur = 30;
-          ctx.shadowColor = `hsl(${this.hue}, 100%, 50%)`;
-          ctx.strokeStyle = `hsl(${this.hue}, 100%, 65%)`;
-          ctx.lineWidth = 10;
+        // Player White Trail
+        if (this.trail.length > 1) {
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 5;
           ctx.lineCap = 'round';
           ctx.lineJoin = 'round';
           ctx.beginPath();
-          ctx.moveTo(this.trail[0].x, this.trail[0].y);
-          for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i].x, this.trail[i].y);
-          ctx.stroke();
-
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(this.trail[0].x, this.trail[0].y);
-          for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i].x, this.trail[i].y);
+          for (let i = 0; i < this.trail.length; i++) {
+            let ptScreenX = this.trail[i].x - (this.distance - this.trail[i].worldX);
+            if (i === 0) ctx.moveTo(ptScreenX, this.trail[i].y);
+            else ctx.lineTo(ptScreenX, this.trail[i].y);
+          }
           ctx.stroke();
         }
 
-        this.particles.forEach(p => {
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = `hsl(${this.hue}, 100%, 50%)`;
-          ctx.fillStyle = `hsla(${this.hue}, 100%, 70%, ${p.life})`;
-          ctx.fillRect(p.x, p.y, p.size, p.size);
-        });
-
-        this.sparks.forEach(s => {
-          ctx.shadowBlur = 15;
-          ctx.shadowColor = '#ffffff';
-          ctx.fillStyle = `rgba(255, 255, 255, ${s.life})`;
-          ctx.fillRect(s.x, s.y, s.size, s.size);
-        });
-
+        // Arrow Cursor
         if (this.state !== 'GAMEOVER') {
-          ctx.shadowBlur = 30;
-          ctx.shadowColor = `hsl(${this.hue}, 100%, 60%)`;
-          ctx.fillStyle = '#ffffff';
-
           ctx.save();
-          ctx.translate(180, this.y);
-          ctx.rotate(this.currentAngle);
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.angle);
 
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.moveTo(18, 0);
-          ctx.lineTo(-14, -13);
-          ctx.lineTo(-6, 0);
-          ctx.lineTo(-14, 13);
+          ctx.moveTo(14, 0);
+          ctx.lineTo(-10, -10);
+          ctx.lineTo(-4, 0);
+          ctx.lineTo(-10, 10);
           ctx.closePath();
           ctx.fill();
-
-          ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
-          ctx.beginPath();
-          ctx.arc(2, 0, 4, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.stroke();
 
           ctx.restore();
         }
 
-        ctx.restore();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '900 26px Outfit';
-        ctx.textAlign = 'left';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = 'rgba(0,0,0,0.8)';
-        ctx.fillText(`SPACEWAVES: ${Math.floor(this.score)}m`, 30, 45);
-
-        ctx.fillStyle = `hsl(${this.hue}, 100%, 60%)`;
-        ctx.font = '800 13px Outfit';
-        ctx.fillText(`ZONE: ${biome.name}`, 30, 68);
-
-        if (this.state === 'START') {
-          ctx.fillStyle = 'rgba(3,3,8,0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = '#00f3ff'; ctx.font = '900 42px Outfit'; ctx.textAlign = 'center';
-          ctx.fillText('SPACEWAVES NEO', canvas.width / 2, 210);
-          ctx.fillStyle = '#ffffff'; ctx.font = '600 18px Outfit';
-          ctx.fillText('Hold SPACEBAR / CLICK to fly up diagonally. Release to dive.', canvas.width / 2, 260);
-          ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillText('CLICK ANYWHERE TO START', canvas.width / 2, 320);
-        } else if (this.state === 'GAMEOVER') {
-          ctx.fillStyle = 'rgba(3,3,8,0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = '#ff0055'; ctx.font = '900 52px Outfit'; ctx.textAlign = 'center';
-          ctx.fillText('CRASHED!', canvas.width / 2, 200);
-          ctx.fillStyle = '#ffffff'; ctx.font = '700 24px Outfit';
-          ctx.fillText(`Distance: ${Math.floor(this.score)}m`, canvas.width / 2, 250);
-          ctx.fillStyle = '#00f3ff'; ctx.font = '600 18px Outfit';
-          ctx.fillText('Syncing score with Live Cloud Server...', canvas.width / 2, 290);
-          ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '600 15px Outfit';
-          ctx.fillText('Click to play again', canvas.width / 2, 340);
+        // Overlay Message
+        if (this.state === 'GAMEOVER') {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '900 42px Outfit';
+          ctx.textAlign = 'center';
+          ctx.fillText(this.win ? 'LEVEL COMPLETE!' : 'CRASHED!', canvas.width / 2, 230);
+          ctx.font = '600 18px Outfit';
+          ctx.fillText('Click or press SPACE to retry', canvas.width / 2, 280);
         }
+      },
+
+      checkCollisions(currentGround) {
+        this.obstacles.forEach(obs => {
+          let screenX = obs.x - this.distance + this.x;
+          if (obs.type === 'block') {
+            if (this.x + 8 >= screenX && this.x - 8 <= screenX + 10 && this.y > obs.y + 4) {
+              this.triggerCrash();
+            }
+          } else if (obs.type === 'spike_bottom' || obs.type === 'spike_block') {
+            for (let i = 0; i < obs.count; i++) {
+              let spikeX = screenX + i * 32;
+              let spikeY = obs.type === 'spike_bottom' ? this.bottomSurfaceY : obs.y;
+              if (Math.abs(this.x - (spikeX + 16)) < 18 && this.y >= spikeY - 28) {
+                this.triggerCrash();
+              }
+            }
+          } else if (obs.type === 'spike_top') {
+            for (let i = 0; i < obs.count; i++) {
+              let spikeX = screenX + i * 32;
+              if (Math.abs(this.x - (spikeX + 16)) < 18 && this.y <= this.topSurfaceY + 28) {
+                this.triggerCrash();
+              }
+            }
+          }
+        });
+      },
+
+      /* Draw Magenta Terrain Block with Internal Crosshatch */
+      drawTerrainBlock(x, y, w, h) {
+        ctx.save();
+        ctx.fillStyle = '#7a0058';
+        ctx.fillRect(x, y, w, h);
+
+        ctx.strokeStyle = '#5a0040';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = -h; i < w + h; i += 16) {
+          ctx.moveTo(x + i, y);
+          ctx.lineTo(x + i + h, y + h);
+          ctx.moveTo(x + i + h, y);
+          ctx.lineTo(x + i, y + h);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, y); ctx.lineTo(x + w, y);
+        ctx.stroke();
+        ctx.restore();
+      },
+
+      /* Draw Sharp Spike with White Border */
+      drawSpike(x, y, size, dir) {
+        ctx.save();
+        ctx.fillStyle = '#9e0070';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (dir === 'up') {
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + size / 2, y - size);
+          ctx.lineTo(x + size, y);
+        } else {
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + size / 2, y + size);
+          ctx.lineTo(x + size, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
       },
 
       async triggerCrash() {
         if (this.state === 'GAMEOVER') return;
         this.state = 'GAMEOVER';
-        this.shake = 40;
+        this.win = false;
         SFX.playCrash();
-        const finalScore = Math.floor(this.score);
-        confetti({ particleCount: 110, spread: 90, origin: { y: 0.6 } });
-        await CloudStore.postScore(currentUser, finalScore);
-      }
-    };
+        let finalScore = Math.min(100, Math.floor((this.distance / this.maxDistance) * 100));
+        
+        // INSTANT CLOUD SAVE
+        await GlobalCloudStore.postScoreInstant(currentUser, finalScore);
+      },
 
-    /* SIMPLE ARCADE ENGINE */
-    const SimpleArcade = {
-      score: 0, state: 'PLAYING',
-      init() { this.score = 0; this.state = 'PLAYING'; },
-      onDown() { this.score += 10; SFX.playJump(); },
-      updateAndDraw() {
-        ctx.fillStyle = '#05050a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#00f3ff'; ctx.font = '900 36px Outfit'; ctx.textAlign = 'center';
-        ctx.fillText('CLASSIC ARCADE MODE', canvas.width / 2, 230);
-        ctx.fillStyle = '#fff'; ctx.font = '600 20px Outfit';
-        ctx.fillText(`Score: ${this.score} - Click to Gain Points!`, canvas.width / 2, 280);
+      async triggerWin() {
+        if (this.state === 'GAMEOVER') return;
+        this.state = 'GAMEOVER';
+        this.win = true;
+        confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+        
+        // INSTANT CLOUD SAVE
+        await GlobalCloudStore.postScoreInstant(currentUser, 100);
       }
     };
   </script>
