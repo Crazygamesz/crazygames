@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crazygamess|</title>
+  <title>NEXUS ARCADE | Cyber Edition</title>
   
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
@@ -148,6 +148,7 @@
     .close-btn:hover { background: var(--neon-pink); border-color: var(--neon-pink); transform: rotate(90deg); }
 
     /* LEADERBOARD TABLE */
+    .lb-status { text-align: center; font-size: 13px; color: var(--neon-cyan); margin-top: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .lb-table { width: 100%; border-collapse: collapse; margin-top: 18px; }
     .lb-table th { text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-muted); padding: 10px 14px; border-bottom: 1px solid var(--border); letter-spacing: 1px; }
     .lb-table td { padding: 12px 14px; font-size: 14px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.03); }
@@ -155,6 +156,7 @@
     .rank-1 { background: #ffcc00; color: #000; box-shadow: 0 0 12px #ffcc00; }
     .rank-2 { background: #d0d0d0; color: #000; }
     .rank-3 { background: #cd7f32; color: #000; }
+    .no-scores { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
 
     /* GAME WINDOW */
     #gameModal .modal-box { width: 980px; max-width: 95%; padding: 18px; background: #000; border-color: var(--neon-cyan); }
@@ -171,14 +173,14 @@
     <div class="gate-box">
       <div class="gate-logo">
         <i class="ph-fill ph-intersect"></i>
-        <span>NEXUS VERIFICATION</span>
+        <span>NEXUS</span>
       </div>
       <div class="gate-subtitle">Authentication Required</div>
       
       <form class="auth-form" onsubmit="handleAccountGate(event)">
         <div class="input-group">
           <label>Create GamerTag / Username</label>
-          <input type="text" id="gateUsername" placeholder="e.g. WaveGod2026" required minlength="3" autocomplete="off">
+          <input type="text" id="gateUsername" placeholder="e.g. WaveGod2026" required minlength="3" maxlength="15" autocomplete="off">
         </div>
         <div class="input-group">
           <label>Access Key / Password</label>
@@ -203,7 +205,7 @@
       <div class="nav-item" onclick="filterCategory('arcade', this)"><i class="ph ph-game-controller"></i> Classic Arcade</div>
       
       <div class="nav-label">Community</div>
-      <div class="nav-item" onclick="openLeaderboard()"><i class="ph-fill ph-trophy"></i> Global Leaderboard</div>
+      <div class="nav-item" onclick="openLeaderboard()"><i class="ph-fill ph-trophy"></i> Live Cloud Ranks</div>
       <div class="nav-item" onclick="logoutAccount()"><i class="ph-fill ph-sign-out"></i> Switch Account</div>
     </nav>
 
@@ -223,15 +225,15 @@
         <!-- Hero Banner -->
         <div class="hero">
           <div class="hero-content">
-            <span class="hero-tag">🔥 SPACEWAVES GLOWUP 1000X</span>
+            <span class="hero-tag">🔥 SPACEWAVES ULTRA REBOOT</span>
             <h1>GEOMETRY DASH: SPACEWAVES NEO</h1>
-            <p>Experience pure 45-degree Geometry Dash Wave velocity. Features dynamic RGB laser ribbon trails, speed shockwaves, directional spark bursts, and instant global score syncing!</p>
+            <p>Experience pure 45-degree Geometry Dash Wave velocity with evolving biomes, dual-layer glow trails, thruster exhaust, and live global cloud leaderboard syncing!</p>
             <div class="btn-group">
               <button class="play-btn" onclick="launchGame('wave')">
                 <i class="ph-fill ph-play-circle"></i> Launch Spacewaves
               </button>
               <button class="leaderboard-btn" onclick="openLeaderboard()">
-                <i class="ph-fill ph-trophy"></i> Ranks
+                <i class="ph-fill ph-trophy"></i> Cloud Ranks
               </button>
             </div>
           </div>
@@ -283,8 +285,9 @@
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal('leaderboardModal')"><i class="ph ph-x"></i></button>
       <h3 style="color:var(--neon-gold); font-size:24px; font-weight:900; display:flex; align-items:center; gap:10px;">
-        <i class="ph-fill ph-trophy"></i> Global Leaderboard
+        <i class="ph-fill ph-trophy"></i> Live Cloud Leaderboard
       </h3>
+      <div class="lb-status" id="lbStatus"><i class="ph ph-circle-notch ph-spin"></i> Syncing with server...</div>
       <table class="lb-table">
         <thead>
           <tr>
@@ -345,37 +348,86 @@
     checkAuth();
 
     /* --------------------------------------------------------------
-       2. GLOBAL LEADERBOARD PERSISTENCE
+       2. REAL LIVE CLOUD SERVER LEADERBOARD INTEGRATION
        -------------------------------------------------------------- */
-    const GlobalStore = {
-      getScores() {
-        let scores = JSON.parse(localStorage.getItem('nexus_global_scores')) || [
-          { name: "ViperWave_99", score: 1850 },
-          { name: "CyberNinja", score: 1420 },
-          { name: "AstroRider", score: 980 },
-          { name: "NeonGod", score: 740 }
-        ];
-        return scores.sort((a, b) => b.score - a.score);
-      },
-      saveScore(name, score) {
-        let scores = this.getScores();
-        let existing = scores.find(s => s.name === name);
-        if (existing) {
-          if (score > existing.score) existing.score = score;
-        } else {
-          scores.push({ name: name, score: score });
+    const SERVER_ENDPOINT = 'https://nexus-arcade-default-rtdb.firebaseio.com/leaderboard.json';
+
+    const CloudStore = {
+      async fetchScores() {
+        try {
+          const res = await fetch(SERVER_ENDPOINT);
+          if (!res.ok) throw new Error('Network response failed');
+          const data = await res.json();
+          if (!data) return [];
+          
+          let list = [];
+          if (Array.isArray(data)) {
+            list = data.filter(Boolean);
+          } else {
+            list = Object.values(data);
+          }
+          return list.sort((a, b) => b.score - a.score);
+        } catch (err) {
+          console.warn('Cloud leaderboard fetch fallback:', err);
+          let local = JSON.parse(localStorage.getItem('nexus_offline_scores')) || [];
+          return local.sort((a, b) => b.score - a.score);
         }
-        localStorage.setItem('nexus_global_scores', JSON.stringify(scores));
+      },
+
+      async postScore(name, score) {
+        try {
+          let currentScores = await this.fetchScores();
+          let existingIndex = currentScores.findIndex(item => item.name === name);
+          
+          if (existingIndex !== -1) {
+            if (score > currentScores[existingIndex].score) {
+              currentScores[existingIndex].score = score;
+            }
+          } else {
+            currentScores.push({ name: name, score: score, timestamp: Date.now() });
+          }
+
+          currentScores.sort((a, b) => b.score - a.score);
+          currentScores = currentScores.slice(0, 50);
+
+          await fetch(SERVER_ENDPOINT, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentScores)
+          });
+        } catch (err) {
+          console.warn('Cloud save fallback to LocalStorage:', err);
+          let local = JSON.parse(localStorage.getItem('nexus_offline_scores')) || [];
+          let existing = local.find(item => item.name === name);
+          if (existing) {
+            if (score > existing.score) existing.score = score;
+          } else {
+            local.push({ name: name, score: score });
+          }
+          localStorage.setItem('nexus_offline_scores', JSON.stringify(local));
+        }
       }
     };
 
-    function openLeaderboard() {
+    async function openLeaderboard() {
       SFX.playHover();
       document.getElementById('leaderboardModal').classList.add('active');
+      const statusEl = document.getElementById('lbStatus');
       const tbody = document.getElementById('leaderboardBody');
+      
+      statusEl.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> Fetching live scores from cloud server...';
       tbody.innerHTML = '';
       
-      const scores = GlobalStore.getScores();
+      const scores = await CloudStore.fetchScores();
+      
+      if (!scores || scores.length === 0) {
+        statusEl.innerHTML = '<i class="ph ph-cloud-check"></i> Connected to Live Server';
+        tbody.innerHTML = `<tr><td colspan="3" class="no-scores"><i class="ph-fill ph-ghost" style="font-size:28px; display:block; margin-bottom:8px;"></i>No players on the leaderboard yet!<br>Play Spacewaves Neo to record the first global score.</td></tr>`;
+        return;
+      }
+
+      statusEl.innerHTML = '<i class="ph ph-cloud-check" style="color:var(--neon-cyan)"></i> Live Cloud Sync Active';
+      tbody.innerHTML = '';
       scores.forEach((item, index) => {
         let rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
         tbody.innerHTML += `
@@ -389,7 +441,7 @@
     }
 
     /* --------------------------------------------------------------
-       3. SYNTHESIZED AUDIO SFX
+       3. ADVANCED SYNTHESIZED AUDIO SFX
        -------------------------------------------------------------- */
     const SFX = {
       ctx: null,
@@ -411,12 +463,25 @@
           this.init();
           let osc = this.ctx.createOscillator(), g = this.ctx.createGain();
           osc.connect(g); g.connect(this.ctx.destination);
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(220, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(650, this.ctx.currentTime + 0.08);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(320, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.09);
           g.gain.setValueAtTime(0.12, this.ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
-          osc.start(); osc.stop(this.ctx.currentTime + 0.08);
+          g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.09);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.09);
+        } catch(e){}
+      },
+      playDive() {
+        try {
+          this.init();
+          let osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+          osc.connect(g); g.connect(this.ctx.destination);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(220, this.ctx.currentTime + 0.09);
+          g.gain.setValueAtTime(0.1, this.ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.09);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.09);
         } catch(e){}
       },
       playCrash() {
@@ -425,11 +490,11 @@
           let osc = this.ctx.createOscillator(), g = this.ctx.createGain();
           osc.connect(g); g.connect(this.ctx.destination);
           osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(180, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.35);
-          g.gain.setValueAtTime(0.25, this.ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
-          osc.start(); osc.stop(this.ctx.currentTime + 0.35);
+          osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(20, this.ctx.currentTime + 0.45);
+          g.gain.setValueAtTime(0.3, this.ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.45);
         } catch(e){}
       },
       playSuccess() {
@@ -478,7 +543,7 @@
     renderBg();
 
     /* --------------------------------------------------------------
-       5. GEOMETRY DASH SPACEWAVES NEO ENGINE
+       5. GEOMETRY DASH SPACEWAVES ULTRA ENGINE
        -------------------------------------------------------------- */
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -486,14 +551,23 @@
     let currentGame = null, animId = null, isHolding = false, lastTime = 0;
 
     window.addEventListener('keydown', e => { 
-      if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); if(!isHolding) WaveGame.onDirectionChange(); isHolding = true; handleInputDown(); }
+      if (e.code === 'Space' || e.code === 'ArrowUp') { 
+        e.preventDefault(); 
+        if(!isHolding) { isHolding = true; WaveGame.onDirectionChange(true); handleInputDown(); }
+      }
     });
     window.addEventListener('keyup', e => { 
-      if (e.code === 'Space' || e.code === 'ArrowUp') { if(isHolding) WaveGame.onDirectionChange(); isHolding = false; }
+      if (e.code === 'Space' || e.code === 'ArrowUp') { 
+        if(isHolding) { isHolding = false; WaveGame.onDirectionChange(false); }
+      }
     });
 
-    canvas.addEventListener('mousedown', () => { WaveGame.onDirectionChange(); isHolding = true; handleInputDown(); });
-    canvas.addEventListener('mouseup', () => { WaveGame.onDirectionChange(); isHolding = false; });
+    canvas.addEventListener('mousedown', () => { 
+      if(!isHolding) { isHolding = true; WaveGame.onDirectionChange(true); handleInputDown(); }
+    });
+    canvas.addEventListener('mouseup', () => { 
+      if(isHolding) { isHolding = false; WaveGame.onDirectionChange(false); }
+    });
 
     function openModal(id) { document.getElementById(id).classList.add('active'); }
     function closeModal(id) {
@@ -548,10 +622,18 @@
       if (currentGame) animId = requestAnimationFrame(masterLoop);
     }
 
-    /* SPACEWAVES NEO ULTRA ENGINE */
+    /* SPACEWAVES ULTRA ENGINE */
     const WaveGame = {
-      state: 'START', y: 260, speedY: 520, scrollSpeed: 520, score: 0,
-      trail: [], particles: [], sparks: [], obstacles: [], shake: 0, hue: 0,
+      state: 'START', y: 260, speedY: 560, scrollSpeed: 560, score: 0,
+      trail: [], particles: [], sparks: [], obstacles: [], shake: 0, 
+      hue: 180, targetHue: 180, angle: 0, currentAngle: 0,
+
+      biomes: [
+        { name: "CYBER NEON", hue: 180, bg: "#03030e" },
+        { name: "ELECTRIC PURPLE", hue: 280, bg: "#090312" },
+        { name: "INFERNO RED", hue: 350, bg: "#120305" },
+        { name: "GOLD VOID", hue: 45, bg: "#120f03" }
+      ],
 
       init() {
         this.y = canvas.height / 2;
@@ -562,12 +644,15 @@
         this.obstacles = [];
         this.shake = 0;
         this.hue = 180;
+        this.targetHue = 180;
+        this.angle = 0;
+        this.currentAngle = 0;
         this.state = 'START';
         for (let i = 0; i < 6; i++) this.spawnObstacle(750 + (i * 360));
       },
 
       spawnObstacle(x) {
-        const gap = 190;
+        const gap = 185;
         const topH = Math.random() * (canvas.height - gap - 90) + 45;
         this.obstacles.push({ x: x, width: 95, topH: topH, bottomH: canvas.height - topH - gap });
       },
@@ -575,39 +660,49 @@
       onDown() {
         if (this.state === 'START') this.state = 'PLAYING';
         if (this.state === 'GAMEOVER') this.init();
-        SFX.playJump();
       },
 
-      onDirectionChange() {
+      onDirectionChange(isClimbing) {
         if (this.state !== 'PLAYING') return;
-        for (let i = 0; i < 12; i++) {
+        if (isClimbing) SFX.playJump();
+        else SFX.playDive();
+
+        for (let i = 0; i < 16; i++) {
           this.sparks.push({
             x: 180, y: this.y,
-            vx: (Math.random() - 0.5) * 400,
-            vy: (Math.random() - 0.5) * 400,
-            size: Math.random() * 4 + 2,
-            life: 1.0
+            vx: -300 + (Math.random() - 0.5) * 400,
+            vy: (Math.random() - 0.5) * 500,
+            size: Math.random() * 5 + 2,
+            life: 0.7
           });
         }
       },
 
       updateAndDraw(dt) {
-        this.hue = (this.hue + dt * 40) % 360;
+        const currentBiomeIdx = Math.min(Math.floor(this.score / 300), this.biomes.length - 1);
+        const biome = this.biomes[currentBiomeIdx];
+        this.targetHue = biome.hue;
+        this.hue += (this.targetHue - this.hue) * dt * 3;
 
         if (this.state === 'PLAYING') {
           this.y += isHolding ? -this.speedY * dt : this.speedY * dt;
-          this.score += dt * 15;
+          this.score += dt * 18;
+
+          this.angle = isHolding ? -Math.PI / 4 : Math.PI / 4;
+          this.currentAngle += (this.angle - this.currentAngle) * 18 * dt;
 
           this.trail.push({ x: 180, y: this.y });
-          if (this.trail.length > 30) this.trail.shift();
+          if (this.trail.length > 35) this.trail.shift();
           this.trail.forEach(t => t.x -= this.scrollSpeed * dt);
 
-          if (Math.random() > 0.3) {
+          if (Math.random() > 0.1) {
             this.particles.push({
-              x: 180, y: this.y,
-              vx: -this.scrollSpeed * 0.4,
-              vy: (Math.random() - 0.5) * 80,
-              life: 0.8
+              x: 180 - Math.cos(this.currentAngle) * 15,
+              y: this.y - Math.sin(this.currentAngle) * 15,
+              vx: -this.scrollSpeed * 0.5 + (Math.random() - 0.5) * 80,
+              vy: (Math.random() - 0.5) * 100,
+              size: Math.random() * 4 + 2,
+              life: 0.6
             });
           }
 
@@ -645,21 +740,24 @@
           this.shake *= 0.9;
         }
 
-        ctx.fillStyle = '#030308';
+        ctx.fillStyle = biome.bg;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.strokeStyle = `hsla(${this.hue}, 80%, 50%, 0.08)`;
+        ctx.strokeStyle = `hsla(${this.hue}, 80%, 50%, 0.12)`;
         ctx.lineWidth = 2;
-        const offset = (this.score * 12) % 60;
-        for (let x = -offset; x < canvas.width; x += 60) {
+        const gridOffset = (this.score * 15) % 60;
+        for (let x = -gridOffset; x < canvas.width; x += 60) {
           ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += 60) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
         }
 
         this.obstacles.forEach(obs => {
-          ctx.shadowBlur = 20;
+          ctx.shadowBlur = 25;
           ctx.shadowColor = `hsl(${this.hue}, 100%, 50%)`;
-          ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, 0.25)`;
-          ctx.strokeStyle = `hsl(${this.hue}, 100%, 60%)`;
+          ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, 0.22)`;
+          ctx.strokeStyle = `hsl(${this.hue}, 100%, 65%)`;
           ctx.lineWidth = 4;
 
           ctx.beginPath();
@@ -676,41 +774,61 @@
         });
 
         if (this.trail.length > 1 && this.state !== 'GAMEOVER') {
-          ctx.shadowBlur = 25;
+          ctx.shadowBlur = 30;
           ctx.shadowColor = `hsl(${this.hue}, 100%, 50%)`;
-          ctx.strokeStyle = `hsl(${this.hue}, 100%, 60%)`;
-          ctx.lineWidth = 8;
+          ctx.strokeStyle = `hsl(${this.hue}, 100%, 65%)`;
+          ctx.lineWidth = 10;
           ctx.lineCap = 'round';
           ctx.lineJoin = 'round';
           ctx.beginPath();
           ctx.moveTo(this.trail[0].x, this.trail[0].y);
           for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i].x, this.trail[i].y);
           ctx.stroke();
+
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(this.trail[0].x, this.trail[0].y);
+          for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i].x, this.trail[i].y);
+          ctx.stroke();
         }
 
+        this.particles.forEach(p => {
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = `hsl(${this.hue}, 100%, 50%)`;
+          ctx.fillStyle = `hsla(${this.hue}, 100%, 70%, ${p.life})`;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+
         this.sparks.forEach(s => {
-          ctx.shadowBlur = 12;
-          ctx.shadowColor = '#00f3ff';
-          ctx.fillStyle = `rgba(0, 243, 255, ${s.life})`;
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#ffffff';
+          ctx.fillStyle = `rgba(255, 255, 255, ${s.life})`;
           ctx.fillRect(s.x, s.y, s.size, s.size);
         });
 
         if (this.state !== 'GAMEOVER') {
-          ctx.shadowBlur = 25;
-          ctx.shadowColor = '#00f3ff';
+          ctx.shadowBlur = 30;
+          ctx.shadowColor = `hsl(${this.hue}, 100%, 60%)`;
           ctx.fillStyle = '#ffffff';
 
           ctx.save();
           ctx.translate(180, this.y);
-          ctx.rotate(isHolding ? -Math.PI / 4 : Math.PI / 4);
+          ctx.rotate(this.currentAngle);
 
           ctx.beginPath();
-          ctx.moveTo(16, 0);
-          ctx.lineTo(-14, -12);
+          ctx.moveTo(18, 0);
+          ctx.lineTo(-14, -13);
           ctx.lineTo(-6, 0);
-          ctx.lineTo(-14, 12);
+          ctx.lineTo(-14, 13);
           ctx.closePath();
           ctx.fill();
+
+          ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+          ctx.beginPath();
+          ctx.arc(2, 0, 4, 0, Math.PI * 2);
+          ctx.fill();
+
           ctx.restore();
         }
 
@@ -723,31 +841,38 @@
         ctx.shadowColor = 'rgba(0,0,0,0.8)';
         ctx.fillText(`SPACEWAVES: ${Math.floor(this.score)}m`, 30, 45);
 
+        ctx.fillStyle = `hsl(${this.hue}, 100%, 60%)`;
+        ctx.font = '800 13px Outfit';
+        ctx.fillText(`ZONE: ${biome.name}`, 30, 68);
+
         if (this.state === 'START') {
-          ctx.fillStyle = 'rgba(3,3,8,0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = 'rgba(3,3,8,0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.fillStyle = '#00f3ff'; ctx.font = '900 42px Outfit'; ctx.textAlign = 'center';
-          ctx.fillText('SPACEWAVES NEO', canvas.width / 2, 220);
+          ctx.fillText('SPACEWAVES NEO', canvas.width / 2, 210);
           ctx.fillStyle = '#ffffff'; ctx.font = '600 18px Outfit';
-          ctx.fillText('Hold SPACEBAR / CLICK to fly up diagonally. Release to fly down.', canvas.width / 2, 270);
-          ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillText('CLICK ANYWHERE TO LAUNCH', canvas.width / 2, 330);
+          ctx.fillText('Hold SPACEBAR / CLICK to fly up diagonally. Release to dive.', canvas.width / 2, 260);
+          ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillText('CLICK ANYWHERE TO START', canvas.width / 2, 320);
         } else if (this.state === 'GAMEOVER') {
           ctx.fillStyle = 'rgba(3,3,8,0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.fillStyle = '#ff0055'; ctx.font = '900 52px Outfit'; ctx.textAlign = 'center';
-          ctx.fillText('CRASHED!', canvas.width / 2, 210);
+          ctx.fillText('CRASHED!', canvas.width / 2, 200);
           ctx.fillStyle = '#ffffff'; ctx.font = '700 24px Outfit';
-          ctx.fillText(`Distance: ${Math.floor(this.score)}m`, canvas.width / 2, 260);
+          ctx.fillText(`Distance: ${Math.floor(this.score)}m`, canvas.width / 2, 250);
           ctx.fillStyle = '#00f3ff'; ctx.font = '600 18px Outfit';
-          ctx.fillText('Click to retry', canvas.width / 2, 320);
+          ctx.fillText('Syncing score with Live Cloud Server...', canvas.width / 2, 290);
+          ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '600 15px Outfit';
+          ctx.fillText('Click to play again', canvas.width / 2, 340);
         }
       },
 
-      triggerCrash() {
+      async triggerCrash() {
+        if (this.state === 'GAMEOVER') return;
         this.state = 'GAMEOVER';
-        this.shake = 35;
+        this.shake = 40;
         SFX.playCrash();
         const finalScore = Math.floor(this.score);
-        GlobalStore.saveScore(currentUser, finalScore);
-        confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 } });
+        confetti({ particleCount: 110, spread: 90, origin: { y: 0.6 } });
+        await CloudStore.postScore(currentUser, finalScore);
       }
     };
 
