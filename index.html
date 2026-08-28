@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spacewaves.io | Campaign Edition</title>
+  <title>Spacewaves.io | Master Edition</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -12,7 +12,7 @@
   <style>
     :root {
       --bg-base: #020005;
-      --bg-panel: rgba(10, 2, 18, 0.75);
+      --bg-panel: rgba(10, 2, 18, 0.85);
       --sw-pink: #ff0055;
       --sw-cyan: #00e5ff;
       --sw-purple: #b08dff;
@@ -92,7 +92,7 @@
     .content { padding: 0 40px 40px; max-width: 1200px; margin: 0 auto; width: 100%; }
     
     .hero {
-      background: linear-gradient(to right, rgba(10,2,18,0.9) 0%, rgba(10,2,18,0.2) 100%), url('https://images.unsplash.com/photo-1614729939124-03290b5609ce?q=80&w=2400&auto=format&fit=crop') center/cover;
+      background: linear-gradient(to right, rgba(10,2,18,0.9) 0%, rgba(10,2,18,0.2) 100%), url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2400&auto=format&fit=crop') center/cover;
       height: 380px; border-radius: 24px; margin-bottom: 40px; display: flex; align-items: center; padding: 50px; border: 1px solid var(--glass-border); box-shadow: 0 30px 60px rgba(0,0,0,0.5); position: relative; overflow: hidden;
     }
     .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(45deg, rgba(0, 229, 255, 0.1), transparent); pointer-events: none; }
@@ -108,11 +108,11 @@
     /* MODALS & GAME UI */
     .modal { display: none; position: fixed; inset: 0; background: rgba(2, 0, 5, 0.95); backdrop-filter: blur(25px); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
     .modal.active { display: flex; }
-    .modal-box { background: var(--bg-panel); border: 1px solid var(--glass-border); border-radius: 24px; width: 600px; max-width: 90%; padding: 40px; position: relative; box-shadow: 0 30px 80px rgba(0,0,0,0.8); }
+    .modal-box { background: var(--bg-panel); border: 1px solid var(--glass-border); border-radius: 24px; width: 650px; max-width: 90%; padding: 40px; position: relative; box-shadow: 0 30px 80px rgba(0,0,0,0.8); max-height: 85vh; overflow-y: auto; }
     .close-btn { position: absolute; top: 24px; right: 24px; background: rgba(255,255,255,0.05); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); z-index: 50; }
     .close-btn:hover { background: var(--sw-pink); transform: rotate(90deg); }
 
-    /* LEADERBOARD */
+    /* LEADERBOARD & ADMIN TABLES */
     .lb-table { width: 100%; border-collapse: collapse; margin-top: 25px; }
     .lb-table th { text-align: left; font-size: 10px; text-transform: uppercase; color: var(--text-muted); padding: 16px 12px; border-bottom: 1px solid var(--glass-border); letter-spacing: 2px; }
     .lb-table td { padding: 16px 12px; font-size: 15px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.02); }
@@ -120,6 +120,10 @@
     .rank-1 { background: #00e5ff; color: #000; box-shadow: 0 0 15px rgba(0,229,255,0.4); }
     .rank-2 { background: #b08dff; color: #000; }
     .rank-3 { background: #ff0055; color: #fff; }
+
+    .action-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: var(--transition); margin-right: 4px; }
+    .action-btn:hover { background: var(--sw-cyan); color: #000; border-color: var(--sw-cyan); }
+    .action-btn.danger:hover { background: var(--sw-pink); color: #fff; border-color: var(--sw-pink); }
 
     /* GAME CANVAS WINDOW */
     #gameModal .modal-box { width: 1200px; max-width: 98%; padding: 0; background: #000; border: 1px solid var(--glass-border); overflow: hidden; border-radius: 20px; box-shadow: 0 0 100px rgba(0,0,0,0.8); }
@@ -138,18 +142,25 @@
     .progress-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
     .progress-fill { height: 100%; width: 0%; background: var(--sw-cyan); transition: width 0.1s linear; border-radius: 4px; box-shadow: 0 0 10px var(--sw-cyan); }
 
-    /* GAME START MENU (LEVEL SELECT) */
-    #spacewavesMenu { position: absolute; inset: 0; background: rgba(2, 0, 5, 0.85); backdrop-filter: blur(15px); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    .sw-title { color: #fff; font-size: 48px; font-weight: 900; letter-spacing: 2px; margin-bottom: 40px; display: flex; align-items: center; gap: 16px; }
+    /* GAME START MENU (LEVEL SELECT & INFO) */
+    #spacewavesMenu { position: absolute; inset: 0; background: rgba(2, 0, 5, 0.9); backdrop-filter: blur(15px); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+    .sw-title { color: #fff; font-size: 40px; font-weight: 900; letter-spacing: 2px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; }
     
-    .level-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%; max-width: 800px; }
-    .level-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 16px; padding: 24px; text-align: left; cursor: pointer; transition: var(--transition); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
+    .level-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; width: 100%; max-width: 900px; margin-bottom: 20px; }
+    .level-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; text-align: left; cursor: pointer; transition: var(--transition); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
     .level-btn::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); transform: scaleY(0); transition: var(--transition); }
-    .level-btn:hover { background: rgba(255,255,255,0.06); border-color: var(--accent); transform: translateY(-3px); }
+    .level-btn:hover { background: rgba(255,255,255,0.06); border-color: var(--accent); transform: translateY(-2px); }
     .level-btn:hover::before { transform: scaleY(1); }
-    .level-btn h3 { font-size: 22px; font-weight: 900; color: #fff; letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between; }
-    .level-btn p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
-    .level-btn .meta { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 1px; margin-top: auto; padding-top: 10px; }
+    .level-btn h3 { font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between; }
+    .level-btn p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+    .level-btn .meta { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 1px; margin-top: auto; padding-top: 8px; }
+
+    /* INSTRUCTIONS & INCLUDED/NOT PANEL */
+    .info-panel { width: 100%; max-width: 900px; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .info-title { font-size: 12px; font-weight: 900; text-transform: uppercase; color: var(--sw-cyan); letter-spacing: 2px; display: flex; align-items: center; gap: 8px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 13px; color: var(--text-muted); }
+    .info-box { background: rgba(0,0,0,0.3); border-radius: 10px; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.03); }
+    .info-box b { color: #fff; display: block; margin-bottom: 6px; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
 
     /* OVERLAYS */
     .overlay-msg { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: rgba(2,0,5,0.9); z-index: 20; backdrop-filter: blur(10px); }
@@ -157,16 +168,37 @@
     .overlay-msg p { font-size: 20px; color: #fff; font-weight: 500; margin-bottom: 30px; }
     .overlay-msg .sub { font-size: 14px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
 
+    /* MAINTENANCE OVERLAY SCREEN */
+    #maintenanceScreen {
+      position: fixed; inset: 0; z-index: 99999;
+      background: rgba(2, 0, 5, 0.98); backdrop-filter: blur(30px);
+      display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px;
+    }
+    #maintenanceScreen.active { display: flex; }
+    #maintenanceScreen i { font-size: 64px; color: var(--sw-gold); margin-bottom: 20px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0.6; } }
+
   </style>
 </head>
 <body>
 
+  <!-- HYPERSPACE BACKGROUND -->
   <canvas id="bgCanvas"></canvas>
 
+  <!-- MAINTENANCE SCREEN OVERLAY -->
+  <div id="maintenanceScreen">
+    <i class="ph-fill ph-wrench"></i>
+    <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 10px; color: #fff;">SYSTEM UNDER MAINTENANCE</h1>
+    <p style="color: var(--text-muted); max-width: 450px; font-size: 15px; line-height: 1.6; margin-bottom: 25px;">The Spacewaves server network is currently undergoing scheduled maintenance or administrative updates. Please check back shortly.</p>
+    <button class="gate-btn" onclick="location.reload()" style="width: 200px; padding: 12px;">Retry Connection</button>
+  </div>
+
+  <!-- SECURE AUTHENTICATION GATE -->
   <div id="authGate">
     <div class="gate-box">
       <div class="gate-logo"><i class="ph-fill ph-intersect"></i> SPACEWAVES</div>
       <div class="gate-subtitle">Secure High-Score Network</div>
+      <div id="banAlertBox" style="display:none; background: rgba(255,0,85,0.15); border: 1px solid var(--sw-pink); color: #fff; padding: 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; text-align: left; line-height: 1.4;"></div>
       <form class="auth-form" onsubmit="handleAccountGate(event)">
         <div class="input-group">
           <label>GamerTag</label>
@@ -188,6 +220,7 @@
     </div>
   </div>
 
+  <!-- ADMIN AUTH MODAL -->
   <div class="modal" id="adminAuthModal">
     <div class="modal-box" style="width: 420px;">
       <button class="close-btn" onclick="closeModal('adminAuthModal')"><i class="ph ph-x"></i></button>
@@ -207,18 +240,43 @@
     </div>
   </div>
 
+  <!-- ADMIN COMMAND PANEL MODAL -->
   <div class="modal" id="adminPanelModal">
-    <div class="modal-box" style="width: 420px;">
+    <div class="modal-box" style="width: 800px;">
       <button class="close-btn" onclick="closeModal('adminPanelModal')"><i class="ph ph-x"></i></button>
-      <h3 style="color:#fff; font-size:20px; font-weight:900; margin-bottom:10px;"><i class="ph-fill ph-terminal-window"></i> Admin Panel Active</h3>
-      <p style="color:var(--text-muted); font-size:13px; margin-bottom: 24px;">Welcome, Administrator. Network status is optimal.</p>
-      <div style="background: rgba(255,0,85,0.1); border: 1px solid var(--sw-pink); padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
-        <div style="font-size:14px; font-weight:700; color:#fff;">Global Maintenance Lock</div>
-        <input type="checkbox" id="maintToggle" style="width:20px; height:20px; accent-color: var(--sw-pink); cursor:pointer;">
+      <h3 style="color:#fff; font-size:22px; font-weight:900; margin-bottom:6px; display:flex; align-items:center; gap:10px;">
+        <i class="ph-fill ph-terminal-window" style="color: var(--sw-cyan)"></i> Admin Command Center
+      </h3>
+      <p style="color:var(--text-muted); font-size:13px; margin-bottom: 24px;">Manage system maintenance, user accounts, edit/delete scores, and ban cheaters.</p>
+      
+      <!-- Maintenance Mode Box -->
+      <div style="background: rgba(255,0,85,0.08); border: 1px solid var(--sw-pink); padding: 18px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <div>
+          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom: 4px;">Global Maintenance Mode</div>
+          <div style="font-size:12px; color:var(--text-muted);">When active, non-admin login is locked and maintenance screen is shown.</div>
+        </div>
+        <input type="checkbox" id="maintToggle" onchange="toggleMaintenanceMode(this)" style="width:24px; height:24px; accent-color: var(--sw-pink); cursor:pointer;">
+      </div>
+
+      <!-- User & Score Management Table -->
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--sw-cyan); letter-spacing: 2px; margin-bottom: 12px;">Registered Users & High Scores Management</div>
+      <div style="max-height: 350px; overflow-y: auto; border: 1px solid var(--glass-border); border-radius: 12px;">
+        <table class="lb-table" style="margin-top: 0;">
+          <thead>
+            <tr>
+              <th style="padding: 12px;">GamerTag</th>
+              <th style="padding: 12px;">High Score</th>
+              <th style="padding: 12px;">Status</th>
+              <th style="padding: 12px; text-align: right;">Admin Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminUserTableBody"></tbody>
+        </table>
       </div>
     </div>
   </div>
 
+  <!-- MAIN DASHBOARD -->
   <div id="appLayout">
     <nav class="sidebar">
       <div class="brand"><i class="ph-fill ph-intersect"></i> SPACEWAVES</div>
@@ -242,11 +300,11 @@
       <div class="content">
         <div class="hero">
           <div class="hero-content">
-            <span class="hero-tag"><i class="ph-fill ph-lightning"></i> Full Campaign Live</span>
-            <h1>LOOK AHEAD.<br>STAY ALIVE.</h1>
-            <p>The rules have changed. Blocks are no longer safe havens. Navigate the entire vertical space, dodge floating geometry, and survive the gauntlet across multiple difficulties.</p>
+            <span class="hero-tag"><i class="ph-fill ph-lightning"></i> Master Update Live</span>
+            <h1>SELECT LEVEL.<br>MASTER THE WAVE.</h1>
+            <p>Level 1 features safe block-riding mechanics. Levels 2, 3, and Endless enforce strict vertical evasion where all structures are lethal. Check the rules per sector before launching.</p>
             <div class="btn-group">
-              <button class="play-btn" onclick="launchGame()"><i class="ph-fill ph-play"></i> Select Level</button>
+              <button class="play-btn" onclick="launchGame()"><i class="ph-fill ph-play"></i> Open Level Hub</button>
             </div>
           </div>
         </div>
@@ -254,6 +312,7 @@
     </main>
   </div>
 
+  <!-- LEADERBOARD MODAL -->
   <div class="modal" id="leaderboardModal">
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal('leaderboardModal')"><i class="ph ph-x"></i></button>
@@ -267,10 +326,12 @@
     </div>
   </div>
 
+  <!-- GAME MODAL -->
   <div class="modal" id="gameModal">
     <div class="modal-box">
       <button class="close-btn" id="gameCloseBtn" onclick="closeModal('gameModal')"><i class="ph ph-x"></i></button>
       
+      <!-- IN-GAME HUD -->
       <div id="spacewavesHud">
         <div class="hud-left">
           <div class="sw-score-display">
@@ -289,6 +350,7 @@
         </div>
       </div>
 
+      <!-- OVERLAYS -->
       <div id="crashOverlay" class="overlay-msg">
         <h2 style="color: var(--sw-pink); text-shadow: 0 0 30px rgba(255,0,85,0.6);">CRASHED</h2>
         <p id="crashDist">Distance: 0m</p>
@@ -297,32 +359,50 @@
 
       <div id="winOverlay" class="overlay-msg">
         <h2 style="color: var(--sw-cyan); text-shadow: 0 0 30px rgba(0,229,255,0.6);">LEVEL CLEAR</h2>
-        <p>Simulation Complete.</p>
+        <p>Sector Conquered Successfully.</p>
         <div class="sub">Press SPACE or ESC to Menu</div>
       </div>
 
+      <!-- START MENU OVERLAY -->
       <div id="spacewavesMenu">
-        <div class="sw-title"><i class="ph-fill ph-intersect" style="color: var(--sw-cyan)"></i> SPACEWAVES</div>
+        <div class="sw-title"><i class="ph-fill ph-intersect" style="color: var(--sw-cyan)"></i> SELECT SECTOR</div>
         <div class="level-grid">
           <div class="level-btn" style="--accent: var(--sw-cyan);" onclick="startSpacewavesLevel(1)">
-            <h3>Level 1 <i class="ph-fill ph-play-circle"></i></h3>
-            <p>Sector Alpha. Standard velocity. Introduction to vertical evasion and basic geometry.</p>
-            <div class="meta">Target: 3,000m</div>
+            <h3>Level 1 (Sector Alpha) <i class="ph-fill ph-play-circle"></i></h3>
+            <p>Standard velocity. Introduction to vertical movement.</p>
+            <div class="meta">Target: 3,000m • Block Riding: ENABLED</div>
           </div>
           <div class="level-btn" style="--accent: var(--sw-purple);" onclick="startSpacewavesLevel(2)">
-            <h3>Level 2 <i class="ph-fill ph-play-circle"></i></h3>
-            <p>Nebula Drift. Increased speed. Navigating floating architecture and tight tunnels.</p>
-            <div class="meta">Target: 5,000m</div>
+            <h3>Level 2 (Nebula Drift) <i class="ph-fill ph-play-circle"></i></h3>
+            <p>Faster pace. Navigating floating architecture.</p>
+            <div class="meta">Target: 5,000m • Block Riding: DISABLED</div>
           </div>
           <div class="level-btn" style="--accent: var(--sw-pink);" onclick="startSpacewavesLevel(3)">
-            <h3>Level 3 <i class="ph-fill ph-play-circle"></i></h3>
-            <p>Void Runner. High velocity. Extreme precision required. Constant spatial awareness.</p>
-            <div class="meta">Target: 8,000m</div>
+            <h3>Level 3 (Void Runner) <i class="ph-fill ph-play-circle"></i></h3>
+            <p>High velocity gauntlet. Precision required.</p>
+            <div class="meta">Target: 8,000m • Block Riding: DISABLED</div>
           </div>
           <div class="level-btn" style="--accent: var(--sw-gold);" onclick="startSpacewavesLevel('endless')">
-            <h3>Endless <i class="ph-fill ph-infinity"></i></h3>
-            <p>Infinity Grid. Procedurally increasing difficulty. Compete for the Global Leaderboard.</p>
-            <div class="meta">Target: Survive</div>
+            <h3>Endless (Infinity Grid) <i class="ph-fill ph-infinity"></i></h3>
+            <p>Procedurally scaling difficulty. Global rankings.</p>
+            <div class="meta">Target: Survive • Block Riding: DISABLED</div>
+          </div>
+        </div>
+
+        <!-- INSTRUCTIONS & WHAT IS INCLUDED/NOT -->
+        <div class="info-panel">
+          <div class="info-title"><i class="ph-fill ph-info"></i> How to Play & Sector Mechanics Guide</div>
+          <div class="info-grid">
+            <div class="info-box">
+              <b>Controls & Instructions</b>
+              Hold <b>SPACEBAR</b>, <b>UP ARROW</b>, or click/tap the screen to fly upward. Release to glide downward diagonally. Avoid all deadly obstacles and reach the distance target. Press <b>ESC</b> anytime to return to this menu.
+            </div>
+            <div class="info-box">
+              <b>What's Included & Not Included</b>
+              • <b>Level 1:</b> Block-riding is <i>included</i> (safe to land on top flat block surfaces).<br>
+              • <b>Levels 2, 3 & Endless:</b> Block-riding is <i>not included</i> (all blocks and spikes are lethal).<br>
+              • <i>Included:</i> Precise hitboxes, campaign progression, and global rankings.
+            </div>
           </div>
         </div>
       </div>
@@ -333,13 +413,39 @@
 
   <script>
     /* =========================================================
-       1. SECURE AUTHENTICATION SYSTEM
+       1. SECURE AUTHENTICATION, BANS & MAINTENANCE SYSTEM
        ========================================================= */
     let currentUser = localStorage.getItem('spacewaves_active_session');
-    
+    let isAdminSession = localStorage.getItem('spacewaves_admin_session') === 'true';
+
+    function checkMaintenanceStatus() {
+      const isMaint = localStorage.getItem('spacewaves_maintenance') === 'true';
+      if (isMaint && !isAdminSession) {
+        document.getElementById('maintenanceScreen').classList.add('active');
+      } else {
+        document.getElementById('maintenanceScreen').classList.remove('active');
+      }
+    }
+    checkMaintenanceStatus();
+
     function checkAuth() {
-      if (!currentUser) { document.getElementById('authGate').classList.remove('hidden'); } 
-      else {
+      checkMaintenanceStatus();
+      if (!currentUser) { 
+        document.getElementById('authGate').classList.remove('hidden'); 
+      } else {
+        // Verify if user is banned
+        let bans = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+        if (bans[currentUser]) {
+          let reason = bans[currentUser];
+          localStorage.removeItem('spacewaves_active_session');
+          currentUser = null;
+          document.getElementById('authGate').classList.remove('hidden');
+          const alertBox = document.getElementById('banAlertBox');
+          alertBox.style.display = 'block';
+          alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> Your account has been banned.<br><b>Reason:</b> ${reason}`;
+          return;
+        }
+
         document.getElementById('authGate').classList.add('hidden');
         document.getElementById('headerUsername').innerText = currentUser;
         document.getElementById('headerAvatar').innerText = currentUser.charAt(0).toUpperCase();
@@ -350,6 +456,16 @@
       e.preventDefault();
       const user = document.getElementById('gateUsername').value.trim();
       const pass = document.getElementById('gatePassword').value.trim();
+      
+      // Check if user is banned before logging in
+      let bans = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+      if (bans[user]) {
+        const alertBox = document.getElementById('banAlertBox');
+        alertBox.style.display = 'block';
+        alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> This account is banned.<br><b>Reason:</b> ${bans[user]}`;
+        return;
+      }
+
       let usersDB = JSON.parse(localStorage.getItem('spacewaves_accounts')) || {};
       
       if (usersDB[user]) {
@@ -359,18 +475,127 @@
         localStorage.setItem('spacewaves_accounts', JSON.stringify(usersDB));
       }
       
-      currentUser = user; localStorage.setItem('spacewaves_active_session', currentUser);
-      document.getElementById('gatePassword').value = ''; checkAuth();
+      currentUser = user; 
+      localStorage.setItem('spacewaves_active_session', currentUser);
+      document.getElementById('gatePassword').value = ''; 
+      document.getElementById('banAlertBox').style.display = 'none';
+      checkAuth();
     }
 
-    function logoutAccount() { localStorage.removeItem('spacewaves_active_session'); currentUser = null; checkAuth(); }
+    function logoutAccount() { 
+      localStorage.removeItem('spacewaves_active_session'); 
+      localStorage.removeItem('spacewaves_admin_session');
+      isAdminSession = false;
+      currentUser = null; 
+      checkAuth(); 
+    }
     checkAuth();
 
     function handleAdminAuth(e) {
       e.preventDefault();
       const pass = document.getElementById('adminPassInput').value;
-      if (pass === 'Cookie') { closeModal('adminAuthModal'); document.getElementById('adminPassInput').value = ''; openModal('adminPanelModal'); } 
-      else { alert('Unauthorized!'); }
+      if (pass === 'Cookie') { 
+        isAdminSession = true;
+        localStorage.setItem('spacewaves_admin_session', 'true');
+        closeModal('adminAuthModal'); 
+        document.getElementById('adminPassInput').value = ''; 
+        openAdminPanel();
+      } else { 
+        alert('Unauthorized Passphrase!'); 
+      }
+    }
+
+    function toggleMaintenanceMode(checkbox) {
+      localStorage.setItem('spacewaves_maintenance', checkbox.checked ? 'true' : 'false');
+      checkMaintenanceStatus();
+    }
+
+    function openAdminPanel() {
+      openModal('adminPanelModal');
+      // Set maintenance toggle state
+      const isMaint = localStorage.getItem('spacewaves_maintenance') === 'true';
+      document.getElementById('maintToggle').checked = isMaint;
+      renderAdminUserTable();
+    }
+
+    function renderAdminUserTable() {
+      const tbody = document.getElementById('adminUserTableBody');
+      const usersDB = JSON.parse(localStorage.getItem('spacewaves_accounts')) || {};
+      const scoresDB = JSON.parse(localStorage.getItem('spacewaves_highscores')) || {};
+      const bansDB = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+
+      const usernames = Object.keys(usersDB);
+      if (usernames.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">No registered accounts found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      usernames.forEach(username => {
+        let score = scoresDB[username] !== undefined ? scoresDB[username] + 'm' : 'No Score';
+        let isBanned = !!bansDB[username];
+        let statusBadge = isBanned ? `<span style="color:var(--sw-pink); font-size:11px; font-weight:900;">BANNED</span>` : `<span style="color:var(--sw-cyan); font-size:11px; font-weight:700;">ACTIVE</span>`;
+        
+        tbody.innerHTML += `
+          <tr>
+            <td style="color:#fff; font-weight:700;">${username}</td>
+            <td style="color:var(--sw-gold); font-weight:900; font-variant-numeric: tabular-nums;">${score}</td>
+            <td>${statusBadge}</td>
+            <td style="text-align: right;">
+              <button class="action-btn" onclick="adminEditScore('${username}')">Edit Score</button>
+              <button class="action-btn danger" onclick="adminDeleteScore('${username}')">Del Score</button>
+              ${isBanned ? 
+                `<button class="action-btn" onclick="adminUnbanUser('${username}')">Unban</button>` : 
+                `<button class="action-btn danger" onclick="adminBanUser('${username}')">Ban</button>`
+              }
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function adminEditScore(username) {
+      let scoresDB = JSON.parse(localStorage.getItem('spacewaves_highscores')) || {};
+      let currentScore = scoresDB[username] || 0;
+      let newScoreInput = prompt(`Edit High Score for user '${username}':`, currentScore);
+      if (newScoreInput !== null) {
+        let parsed = parseInt(newScoreInput, 10);
+        if (!isNaN(parsed) && parsed >= 0) {
+          scoresDB[username] = parsed;
+          localStorage.setItem('spacewaves_highscores', JSON.stringify(scoresDB));
+          renderAdminUserTable();
+        } else {
+          alert('Invalid score value entered.');
+        }
+      }
+    }
+
+    function adminDeleteScore(username) {
+      if (confirm(`Are you sure you want to delete the high score for '${username}'?`)) {
+        let scoresDB = JSON.parse(localStorage.getItem('spacewaves_highscores')) || {};
+        delete scoresDB[username];
+        localStorage.setItem('spacewaves_highscores', JSON.stringify(scoresDB));
+        renderAdminUserTable();
+      }
+    }
+
+    function adminBanUser(username) {
+      let reason = prompt(`Enter ban reason for user '${username}':`, 'Violation of fair play / Cheating detected');
+      if (reason !== null) {
+        let bansDB = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+        bansDB[username] = reason.trim() || 'Administrative ban';
+        localStorage.setItem('spacewaves_bans', JSON.stringify(bansDB));
+        renderAdminUserTable();
+      }
+    }
+
+    function adminUnbanUser(username) {
+      if (confirm(`Unban user '${username}'?`)) {
+        let bansDB = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+        delete bansDB[username];
+        localStorage.setItem('spacewaves_bans', JSON.stringify(bansDB));
+        renderAdminUserTable();
+      }
     }
 
     /* =========================================================
@@ -443,12 +668,12 @@
     const ctx = canvas.getContext('2d');
     let isHolding = false, animId = null, lastTime = 0;
 
-    // LEVEL DEFINITIONS
+    // LEVEL CONFIGURATIONS
     const LEVEL_CONFIG = {
-      1: { name: 'Sector Alpha', speedX: 550, speedY: 600, targetDist: 300000, color: '#00e5ff', complexity: 1 },
-      2: { name: 'Nebula Drift', speedX: 700, speedY: 700, targetDist: 500000, color: '#b08dff', complexity: 2 },
-      3: { name: 'Void Runner', speedX: 850, speedY: 800, targetDist: 800000, color: '#ff0055', complexity: 3 },
-      'endless': { name: 'Infinity Grid', speedX: 700, speedY: 750, targetDist: Infinity, color: '#ffaa00', complexity: 3 }
+      1: { name: 'Sector Alpha', speedX: 500, speedY: 550, targetDist: 300000, color: '#00e5ff', complexity: 1, allowBlockRiding: true },
+      2: { name: 'Nebula Drift', speedX: 650, speedY: 650, targetDist: 500000, color: '#b08dff', complexity: 2, allowBlockRiding: false },
+      3: { name: 'Void Runner', speedX: 800, speedY: 750, targetDist: 800000, color: '#ff0055', complexity: 3, allowBlockRiding: false },
+      'endless': { name: 'Infinity Grid', speedX: 650, speedY: 700, targetDist: Infinity, color: '#ffaa00', complexity: 3, allowBlockRiding: false }
     };
 
     window.addEventListener('keydown', e => { 
@@ -476,7 +701,7 @@
 
     function startSpacewavesLevel(lvlId) {
       document.getElementById('spacewavesMenu').style.display = 'none';
-      document.getElementById('gameCloseBtn').style.display = 'none'; // hide X while playing
+      document.getElementById('gameCloseBtn').style.display = 'none'; // hide X during gameplay
       document.getElementById('spacewavesHud').style.display = 'flex';
       
       const cfg = LEVEL_CONFIG[lvlId];
@@ -501,7 +726,7 @@
 
     const Spacewaves = {
       active: false, state: 'PLAYING', config: null, levelId: null,
-      x: 250, y: 300, radius: 12, // Hitbox radius
+      x: 250, y: 300, radius: 11,
       
       topBoundary: 60, bottomBoundary: 540,
       angle: 0, distancePixels: 0,
@@ -516,23 +741,17 @@
         this.lastGeneratedX = 1200;
         document.getElementById('crashOverlay').style.display = 'none';
         document.getElementById('winOverlay').style.display = 'none';
-        
-        // Endless speeds up over time.
         this.currentSpeedX = config.speedX;
       },
 
-      /* MULTI-TIER GENERATION: Forces vertical movement */
       generateObstacles() {
         while (this.lastGeneratedX < this.distancePixels + 3000) {
-          // Leave gap based on speed
-          let gap = 500 + (this.currentSpeedX * 0.3) + Math.random() * 200; 
-          
+          let gap = 550 + (this.currentSpeedX * 0.25) + Math.random() * 200; 
           let maxTypes = this.config.complexity === 1 ? 3 : (this.config.complexity === 2 ? 5 : 7);
           let type = Math.floor(Math.random() * maxTypes);
           
-          // Helper sizes
-          let bw = 150 + Math.random() * 200; // Block width
-          let bh = 100 + Math.random() * 100; // Block height
+          let bw = 160 + Math.random() * 180; 
+          let bh = 110 + Math.random() * 90; 
 
           switch(type) {
             case 0: // Floor Block
@@ -542,28 +761,30 @@
               this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: this.topBoundary, w: bw, h: bh });
               this.lastGeneratedX += bw + gap; break;
             case 2: // Floor Spikes
-              this.obstacles.push({ type: 'spike', ground: 'bottom', x: this.lastGeneratedX, count: 2 + Math.floor(Math.random() * 3) });
+              this.obstacles.push({ type: 'spike', ground: 'bottom', x: this.lastGeneratedX, count: 2 + Math.floor(Math.random() * 3), isUp: false });
               this.lastGeneratedX += gap; break;
             case 3: // Ceiling Spikes
-              this.obstacles.push({ type: 'spike', ground: 'top', x: this.lastGeneratedX, count: 2 + Math.floor(Math.random() * 3) });
+              this.obstacles.push({ type: 'spike', ground: 'top', x: this.lastGeneratedX, count: 2 + Math.floor(Math.random() * 3), isUp: true });
               this.lastGeneratedX += gap; break;
             case 4: // Floating Mid Block
-              this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: 300 - (bh/2), w: bw, h: bh });
+              this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: 280 - (bh/2), w: bw, h: bh });
               this.lastGeneratedX += bw + gap; break;
-            case 5: // Tunnel (Top and Bottom blocks aligned)
-              let tunnelGap = 200; // tight!
-              let topH = 150; let botH = this.bottomBoundary - this.topBoundary - topH - tunnelGap;
+            case 5: // Tunnel
+              let tunnelGap = 210; 
+              let topH = 140; let botH = this.bottomBoundary - this.topBoundary - topH - tunnelGap;
               this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: this.topBoundary, w: bw, h: topH });
               this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: this.bottomBoundary - botH, w: bw, h: botH });
               this.lastGeneratedX += bw + gap; break;
-            case 6: // Floating block with spikes on top/bottom
-              this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: 250, w: bw, h: 100 });
-              this.obstacles.push({ type: 'spike', ground: 250, x: this.lastGeneratedX + (bw/2) - 40, count: 2, isUp: true });
-              this.obstacles.push({ type: 'spike', ground: 350, x: this.lastGeneratedX + (bw/2) - 40, count: 2, isUp: false });
+            case 6: // Floating block with precisely positioned spikes
+              let blockY = 240;
+              this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: blockY, w: bw, h: 110 });
+              // Spike on top of floating block (pointing UP)
+              this.obstacles.push({ type: 'spike', ground: blockY, x: this.lastGeneratedX + 30, count: 1, isUp: true });
+              // Spike under floating block (pointing DOWN)
+              this.obstacles.push({ type: 'spike', ground: blockY + 110, x: this.lastGeneratedX + bw - 70, count: 1, isUp: false });
               this.lastGeneratedX += bw + gap; break;
           }
         }
-        // Memory cleanup
         this.obstacles = this.obstacles.filter(obs => obs.x + (obs.w||200) > this.distancePixels - 800);
       },
 
@@ -575,7 +796,7 @@
         if (!this.active) return;
         this.active = false;
         if(animId) cancelAnimationFrame(animId);
-        launchGame(); // resets modal to menu state
+        launchGame();
       },
 
       createExplosion(color) {
@@ -587,34 +808,45 @@
 
       updateAndDraw(dt) {
         if (this.state === 'PLAYING') {
-          // Endless mode acceleration
-          if (this.levelId === 'endless') this.currentSpeedX += dt * 5; 
-          
+          if (this.levelId === 'endless') this.currentSpeedX += dt * 4; 
           this.distancePixels += this.currentSpeedX * dt;
           
-          // Check Win Condition
           if (this.distancePixels >= this.config.targetDist) {
             this.win();
           } else {
             this.generateObstacles();
             
-            // Y-Axis Physics (Only constrained by absolute boundaries)
-            if (isHolding) {
-              this.y -= this.config.speedY * dt;
-              if (this.y <= this.topBoundary + this.radius) { this.y = this.topBoundary + this.radius; this.angle = 0; } else { this.angle = -Math.PI / 5; }
-            } else {
-              this.y += this.config.speedY * dt;
-              if (this.y >= this.bottomBoundary - this.radius) { this.y = this.bottomBoundary - this.radius; this.angle = 0; } else { this.angle = Math.PI / 5; }
+            // Determine ground boundaries based on block riding rules
+            let currentGround = this.bottomBoundary;
+            let currentCeil = this.topBoundary;
+
+            if (this.config.allowBlockRiding) {
+              this.obstacles.forEach(obs => {
+                if (obs.type === 'block') {
+                  let sx = obs.x - this.distancePixels + this.x;
+                  if (this.x >= sx && this.x <= sx + obs.w) {
+                    if (obs.y >= this.y && obs.y < currentGround) {
+                      currentGround = obs.y;
+                    }
+                  }
+                }
+              });
             }
 
-            // Trail
+            if (isHolding) {
+              this.y -= this.config.speedY * dt;
+              if (this.y <= currentCeil + this.radius) { this.y = currentCeil + this.radius; this.angle = 0; } else { this.angle = -Math.PI / 5; }
+            } else {
+              this.y += this.config.speedY * dt;
+              if (this.y >= currentGround - this.radius) { this.y = currentGround - this.radius; this.angle = 0; } else { this.angle = Math.PI / 5; }
+            }
+
             this.trail.push({ x: this.x, y: this.y, d: this.distancePixels });
             if (this.trail.length > 35) this.trail.shift();
 
             this.checkCollisions();
           }
           
-          // UI Updates
           let meters = Math.floor(this.distancePixels / 100);
           document.getElementById('swProgressText').innerText = `${meters}m`;
           
@@ -628,7 +860,7 @@
         /* RENDERING */
         ctx.fillStyle = '#020005'; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw Obstacles (Deadly Geometry)
+        // Draw Obstacles
         this.obstacles.forEach(obs => {
           let sx = obs.x - this.distancePixels + this.x;
           if (sx > -400 && sx < canvas.width + 400) {
@@ -636,17 +868,16 @@
               ctx.fillStyle = '#0a0212'; ctx.fillRect(sx, obs.y, obs.w, obs.h);
               ctx.strokeStyle = this.config.color; ctx.lineWidth = 2; ctx.strokeRect(sx, obs.y, obs.w, obs.h);
               
-              // Internal grid pattern for blocks to make them look solid/deadly
               ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
               for(let ix = 0; ix < obs.w; ix += 30) { ctx.beginPath(); ctx.moveTo(sx + ix, obs.y); ctx.lineTo(sx + ix, obs.y + obs.h); ctx.stroke(); }
             } else if (obs.type === 'spike') {
-              let isTop = obs.ground === 'top' || obs.isUp === false;
+              let isTop = obs.isUp; // true = points up, false = points down
               let sy = obs.ground === 'top' ? this.topBoundary : (obs.ground === 'bottom' ? this.bottomBoundary : obs.ground);
               
               for(let i=0; i<obs.count; i++) {
                 ctx.beginPath();
-                if(isTop) { ctx.moveTo(sx + i*40, sy); ctx.lineTo(sx + i*40 + 20, sy + 40); ctx.lineTo(sx + i*40 + 40, sy); } 
-                else { ctx.moveTo(sx + i*40, sy); ctx.lineTo(sx + i*40 + 20, sy - 40); ctx.lineTo(sx + i*40 + 40, sy); }
+                if(isTop) { ctx.moveTo(sx + i*40, sy); ctx.lineTo(sx + i*40 + 20, sy - 35); ctx.lineTo(sx + i*40 + 40, sy); } 
+                else { ctx.moveTo(sx + i*40, sy); ctx.lineTo(sx + i*40 + 20, sy + 35); ctx.lineTo(sx + i*40 + 40, sy); }
                 ctx.fillStyle = '#0a0212'; ctx.fill();
                 ctx.strokeStyle = '#ff0055'; ctx.lineWidth = 3; ctx.stroke();
               }
@@ -654,7 +885,7 @@
           }
         });
 
-        // Floor / Ceiling Lines
+        // Floor / Ceiling Boundary Lines
         ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.moveTo(0, this.topBoundary); ctx.lineTo(canvas.width, this.topBoundary); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, this.bottomBoundary); ctx.lineTo(canvas.width, this.bottomBoundary); ctx.stroke();
@@ -673,7 +904,7 @@
           ctx.stroke(); ctx.restore();
         }
 
-        // Particle System
+        // Particles
         for (let i = this.particles.length - 1; i >= 0; i--) {
           let p = this.particles[i];
           p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt * 2.0;
@@ -688,45 +919,43 @@
           ctx.save();
           ctx.translate(this.x, this.y); ctx.rotate(this.angle);
           ctx.fillStyle = '#ffffff'; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15;
-          // Draw ship slightly larger based on radius
           ctx.beginPath(); ctx.moveTo(this.radius + 6, 0); ctx.lineTo(-this.radius, -this.radius - 2); ctx.lineTo(-this.radius + 6, 0); ctx.lineTo(-this.radius, this.radius + 2); ctx.fill();
           ctx.restore();
         }
       },
 
-      /* TRUE AABB COLLISION - ALL BLOCKS ARE DEADLY */
       checkCollisions() {
-        // Player hitbox bounding box
-        let px1 = this.x - this.radius; let px2 = this.x + this.radius;
-        let py1 = this.y - this.radius; let py2 = this.y + this.radius;
+        let px1 = this.x - this.radius + 3; let px2 = this.x + this.radius - 3;
+        let py1 = this.y - this.radius + 3; let py2 = this.y + this.radius - 3;
 
         for (let obs of this.obstacles) {
           let sx = obs.x - this.distancePixels + this.x;
-          
-          // Optimization: skip if far away
           if (sx > this.x + 100 || sx + (obs.w||200) < this.x - 100) continue;
 
           if (obs.type === 'block') {
-            // AABB Collision with block
             let bx1 = sx; let bx2 = sx + obs.w;
             let by1 = obs.y; let by2 = obs.y + obs.h;
             
-            // Shrink player hitbox slightly to be forgiving
-            let forgive = 4;
-            if (px2 - forgive > bx1 && px1 + forgive < bx2 && py2 - forgive > by1 && py1 + forgive < by2) {
+            // If Level 1 with block riding enabled, allow riding on the exact top surface safely
+            if (this.config.allowBlockRiding && Math.abs(py2 - by1) < 8 && px2 > bx1 + 4 && px1 < bx2 - 4 && this.y <= by1 + 4) {
+              continue; // Safe ride on top!
+            }
+
+            // Otherwise, block is deadly on sides, bottom, or for levels where riding is disabled
+            if (px2 > bx1 && px1 < bx2 && py2 > by1 && py1 < by2) {
               this.crash(); return;
             }
           } else if (obs.type === 'spike') {
-            let isTop = obs.ground === 'top' || obs.isUp === false;
+            let isTop = obs.isUp; // true = points up (base at bottom), false = points down (base at top)
             let sy = obs.ground === 'top' ? this.topBoundary : (obs.ground === 'bottom' ? this.bottomBoundary : obs.ground);
             
             for(let i=0; i<obs.count; i++) {
-              let spikeCenter = sx + i*40 + 20;
-              // Simple X proximity check
-              if (Math.abs(this.x - spikeCenter) < 18) {
-                // Height check
-                if(isTop && py1 < sy + 35) this.crash();
-                if(!isTop && py2 > sy - 35) this.crash();
+              let spikeLeft = sx + (i * 40) + 4;
+              let spikeRight = spikeLeft + 32;
+              
+              if (px2 > spikeLeft && px1 < spikeRight) {
+                if (isTop && py1 < sy && py2 > sy - 28) { this.crash(); return; }
+                if (!isTop && py2 > sy && py1 < sy + 28) { this.crash(); return; }
               }
             }
           }
@@ -747,15 +976,10 @@
       win() {
         if (this.state === 'WIN') return;
         this.state = 'WIN';
-        
-        // Stop movement
         this.distancePixels = this.config.targetDist;
         
-        // Visual flair
         this.createExplosion(this.config.color);
         document.getElementById('winOverlay').style.display = 'flex';
-        
-        // Trigger confetti
         confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 }, colors: ['#ffffff', this.config.color, '#ff0055'] });
       }
     };
