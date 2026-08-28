@@ -5,47 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SpaceWave | Ultimate Edition</title>
   <style>
-    /* UI Design & Glassmorphism */
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
     body { background: #050814; color: #fff; overflow: hidden; height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center; }
     
-    /* Background Stars CSS */
     .space-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: radial-gradient(circle at bottom, #1b2735 0%, #090a0f 100%); }
     
     .view { display: none; width: 100%; max-width: 800px; padding: 20px; z-index: 10; flex-direction: column; align-items: center; }
     .view.active { display: flex; animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .glass-panel {
-      background: rgba(20, 25, 45, 0.6);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(0, 210, 255, 0.2);
-      border-radius: 16px;
-      padding: 40px;
-      width: 100%;
-      box-shadow: 0 15px 35px rgba(0,210,255,0.1);
-      text-align: center;
+    .login-container {
+      background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1); padding: 40px; border-radius: 16px;
+      width: 100%; max-width: 400px; box-shadow: 0 15px 25px rgba(0,0,0,0.5); text-align: center;
     }
 
-    h1, h2 { background: -webkit-linear-gradient(#00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
-    
-    input { width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,210,255,0.3); border-radius: 8px; color: #fff; font-size: 16px; outline: none; transition: 0.3s; }
-    input:focus { border-color: #00d2ff; box-shadow: 0 0 10px rgba(0,210,255,0.3); }
+    .login-container h2 {
+      margin-bottom: 25px; font-size: 28px; letter-spacing: 2px; text-transform: uppercase;
+      background: -webkit-linear-gradient(#00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
 
-    button { width: 100%; padding: 14px; margin-bottom: 10px; background: linear-gradient(90deg, #00d2ff, #3a7bd5); border: none; border-radius: 8px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+    .input-group { margin-bottom: 20px; text-align: left; }
+    .input-group input {
+      width: 100%; padding: 12px 15px; background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px;
+      color: #fff; font-size: 16px; outline: none; transition: border-color 0.3s;
+    }
+    .input-group input:focus { border-color: #00d2ff; }
+
+    .glass-panel {
+      background: rgba(20, 25, 45, 0.6); backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 210, 255, 0.2); border-radius: 16px;
+      padding: 40px; width: 100%; box-shadow: 0 15px 35px rgba(0,210,255,0.1); text-align: center;
+    }
+
+    h1, h3 { background: -webkit-linear-gradient(#00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+    
+    button {
+      width: 100%; padding: 14px; margin-bottom: 10px;
+      background: linear-gradient(90deg, #00d2ff, #3a7bd5); border: none; border-radius: 8px;
+      color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;
+    }
     button:hover { opacity: 0.9; transform: scale(0.98); box-shadow: 0 0 15px rgba(0,210,255,0.4); }
-    button.secondary { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+    button.secondary { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); margin-top: 5px; }
     button.danger { background: rgba(255, 50, 50, 0.2); border: 1px solid #ff4d4d; color: #ff4d4d; }
     button.danger:hover { background: #ff4d4d; color: #fff; }
 
-    /* Admin Table */
     table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
     th, td { border: 1px solid rgba(0,210,255,0.2); padding: 12px; text-align: left; }
     th { background: rgba(0,210,255,0.1); color: #00d2ff; }
     
     .broadcast-box { background: rgba(255, 200, 0, 0.1); border: 1px solid #ffc800; color: #ffc800; padding: 10px; border-radius: 8px; margin-bottom: 20px; width: 100%; }
 
-    /* Game UI */
     #game-view { max-width: 100%; padding: 0; justify-content: center; align-items: center; }
     canvas { background: transparent; display: block; box-shadow: inset 0 0 50px #000; }
     #hud { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 20; pointer-events: none; }
@@ -59,23 +70,27 @@
 
   <!-- AUTHENTICATION VIEW -->
   <div id="auth-view" class="view active">
-    <div class="glass-panel">
-      <h1>SpaceWave</h1>
-      <input type="email" id="email" placeholder="Email Address">
-      <input type="password" id="password" placeholder="Password">
-      <button id="login-btn">Log In</button>
-      <button id="signup-btn" class="secondary">Sign Up</button>
-      <div id="auth-error" style="color: #ff4d4d; margin-top: 10px; font-size: 14px;"></div>
+    <div class="login-container">
+      <h2>SpaceWave</h2>
+      <div class="input-group">
+        <input type="text" id="username" placeholder="Username" required autocomplete="username">
+      </div>
+      <div class="input-group">
+        <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
+      </div>
+      <button id="login-btn">Initialize Launch (Log In)</button>
+      <button id="signup-btn" class="secondary">Create Account</button>
+      <div id="auth-error" style="color: #ff4d4d; margin-top: 15px; font-size: 14px; font-weight: bold;"></div>
     </div>
   </div>
 
   <!-- DASHBOARD VIEW -->
   <div id="dashboard-view" class="view">
     <div class="glass-panel">
-      <h2>Transmission Array</h2>
+      <h3>Transmission Array</h3>
       <div id="global-announcement" class="broadcast-box" style="display: none;"></div>
       
-      <p style="margin-bottom: 20px; font-size: 18px;">Pilot: <strong id="user-email" style="color:#00d2ff;"></strong></p>
+      <p style="margin-bottom: 20px; font-size: 18px;">Pilot: <strong id="user-display-name" style="color:#00d2ff;"></strong></p>
       <p style="margin-bottom: 30px; font-size: 18px;">High Score: <strong id="user-score" style="color:#00d2ff;"></strong></p>
 
       <button id="play-btn">Launch SpaceWave</button>
@@ -87,18 +102,18 @@
   <!-- ADMIN PANEL VIEW -->
   <div id="admin-view" class="view">
     <div class="glass-panel" style="max-width: 1000px;">
-      <h2 style="color: #9b59b6;">Command Center (Admin)</h2>
+      <h3 style="color: #9b59b6;">Command Center (Admin)</h3>
       
       <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <input type="text" id="broadcast-input" placeholder="Enter global announcement...">
-        <button id="broadcast-btn" style="width: auto;">Broadcast</button>
+        <input type="text" id="broadcast-input" placeholder="Enter global announcement..." style="width: 100%; padding: 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,210,255,0.3); border-radius: 8px; color: #fff;">
+        <button id="broadcast-btn" style="width: auto; margin-bottom: 0;">Broadcast</button>
       </div>
 
       <div style="overflow-x: auto;">
         <table id="users-table">
           <thead>
             <tr>
-              <th>Email</th>
+              <th>Username</th>
               <th>Score</th>
               <th>Role</th>
               <th>Status</th>
@@ -126,9 +141,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, set, get, child, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // --- 1. FIREBASE CONFIG ---
     const firebaseConfig = {
       apiKey: "AIzaSyDZt9nls66xzPoWRsykXYE-mzeyyOrl4gg",
       authDomain: "spacewave-101e8.firebaseapp.com",
@@ -144,17 +158,36 @@
     const auth = getAuth(app);
     const database = getDatabase(app);
 
-    // --- 2. GLOBAL STATE ---
     let currentUser = null;
     let userData = null;
 
-    // View Navigation
     function showView(viewId) {
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById(viewId).classList.add('active');
     }
 
-    // --- 3. AUTHENTICATION & DATABASE LOGIC ---
+    // Converts username to a valid dummy email for Firebase Auth
+    function getAuthEmail(username) {
+      const sanitized = username.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (sanitized.length < 3) throw new Error("Username must be at least 3 letters/numbers.");
+      return sanitized + "@spacewave.local";
+    }
+
+    function handleAuthError(err) {
+      const errBox = document.getElementById('auth-error');
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found') {
+        errBox.innerText = "Account not found. Click 'Create Account' first.";
+      } else if (err.code === 'auth/email-already-in-use') {
+        errBox.innerText = "Username already taken. Please Log In or choose another.";
+      } else if (err.code === 'auth/weak-password') {
+        errBox.innerText = "Password must be at least 6 characters.";
+      } else if (err.code === 'auth/configuration-not-found') {
+        errBox.innerText = "ERROR: Email/Password login is NOT enabled in your Firebase Console.";
+      } else {
+        errBox.innerText = err.message;
+      }
+    }
+
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
@@ -163,16 +196,11 @@
         if (snapshot.exists()) {
           userData = snapshot.val();
           if (userData.isBanned) {
-            alert("SECURITY ALERT: Your pilot license has been permanently revoked (Banned).");
+            alert("SECURITY ALERT: Your pilot license has been permanently revoked.");
             signOut(auth);
             return;
           }
-        } else {
-          // New User Setup in Database
-          userData = { email: user.email, score: 0, role: 'player', isBanned: false };
-          await set(ref(database, `users/${user.uid}`), userData);
         }
-        
         setupDashboard();
         showView('dashboard-view');
       } else {
@@ -182,32 +210,55 @@
       }
     });
 
-    // Login/Signup Buttons
+    // Login logic
     document.getElementById('login-btn').addEventListener('click', () => {
-      const e = document.getElementById('email').value, p = document.getElementById('password').value;
-      signInWithEmailAndPassword(auth, e, p).catch(err => document.getElementById('auth-error').innerText = err.message);
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      if (!u || !p) { document.getElementById('auth-error').innerText = "Enter username and password."; return; }
+      
+      try {
+        const dummyEmail = getAuthEmail(u);
+        signInWithEmailAndPassword(auth, dummyEmail, p).catch(handleAuthError);
+      } catch(e) {
+        document.getElementById('auth-error').innerText = e.message;
+      }
     });
+
+    // Signup logic
     document.getElementById('signup-btn').addEventListener('click', () => {
-      const e = document.getElementById('email').value, p = document.getElementById('password').value;
-      createUserWithEmailAndPassword(auth, e, p).catch(err => document.getElementById('auth-error').innerText = err.message);
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      if (!u || !p) { document.getElementById('auth-error').innerText = "Enter username and password."; return; }
+      
+      try {
+        const dummyEmail = getAuthEmail(u);
+        createUserWithEmailAndPassword(auth, dummyEmail, p)
+          .then((userCredential) => {
+            const newUser = { username: u, score: 0, role: 'player', isBanned: false };
+            set(ref(database, `users/${userCredential.user.uid}`), newUser);
+            userData = newUser;
+          })
+          .catch(handleAuthError);
+      } catch (e) {
+        document.getElementById('auth-error').innerText = e.message;
+      }
     });
+
     document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
-    // --- 4. DASHBOARD & ADMIN SYSTEMS ---
     function setupDashboard() {
-      document.getElementById('user-email').innerText = userData.email;
-      document.getElementById('user-score').innerText = userData.score;
-      document.getElementById('admin-btn').style.display = (userData.role === 'admin') ? 'block' : 'none';
+      document.getElementById('user-display-name').innerText = userData?.username || "Unknown Pilot";
+      document.getElementById('user-score').innerText = userData?.score || 0;
+      document.getElementById('admin-btn').style.display = (userData?.role === 'admin') ? 'block' : 'none';
     }
 
-    // Listen to Global Announcements
+    // Admin Systems
     onValue(ref(database, 'global/announcement'), (snapshot) => {
       const msg = snapshot.val();
       const box = document.getElementById('global-announcement');
       if (msg) { box.innerText = "ADMIN BROADCAST: " + msg; box.style.display = 'block'; }
     });
 
-    // Admin Panel Routing
     document.getElementById('admin-btn').addEventListener('click', () => {
       showView('admin-view');
       onValue(ref(database, 'users'), (snapshot) => {
@@ -217,8 +268,8 @@
           const uid = child.key; const data = child.val();
           tbody.innerHTML += `
             <tr>
-              <td>${data.email}</td>
-              <td>${data.score}</td>
+              <td>${data.username || 'Unknown'}</td>
+              <td>${data.score || 0}</td>
               <td>${data.role}</td>
               <td style="color:${data.isBanned ? '#ff4d4d' : '#00d2ff'}">${data.isBanned ? 'BANNED' : 'ACTIVE'}</td>
               <td>
@@ -237,18 +288,14 @@
     });
     document.getElementById('admin-back-btn').addEventListener('click', () => showView('dashboard-view'));
 
-    // Global Window functions so inline HTML buttons can access them
     window.toggleBan = (uid, current) => update(ref(database, `users/${uid}`), { isBanned: !current });
     window.makeAdmin = (uid) => update(ref(database, `users/${uid}`), { role: 'admin' });
 
-
-    // --- 5. THE SPACEWAVE GAME ENGINE ---
+    // --- GAME ENGINE ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    let gameLoopId;
     let isPlaying = false;
     
-    // Game State
     let player, bullets, enemies, particles, score, keys = {};
     window.addEventListener('keydown', e => keys[e.key] = true);
     window.addEventListener('keyup', e => keys[e.key] = false);
@@ -260,18 +307,12 @@
         if ((keys['ArrowRight'] || keys['d']) && this.x < canvas.width - this.w) this.x += this.speed;
         if ((keys['ArrowUp'] || keys['w']) && this.y > 0) this.y -= this.speed;
         if ((keys['ArrowDown'] || keys['s']) && this.y < canvas.height - this.h) this.y += this.speed;
-        
-        if (keys[' '] && this.cooldown <= 0) {
-          bullets.push(new Bullet(this.x + this.w/2, this.y));
-          this.cooldown = 15;
-        }
+        if (keys[' '] && this.cooldown <= 0) { bullets.push(new Bullet(this.x + this.w/2, this.y)); this.cooldown = 15; }
         if (this.cooldown > 0) this.cooldown--;
       }
       draw() {
-        ctx.fillStyle = '#00d2ff';
-        ctx.shadowBlur = 15; ctx.shadowColor = '#00d2ff';
-        ctx.beginPath(); ctx.moveTo(this.x + this.w/2, this.y); ctx.lineTo(this.x + this.w, this.y + this.h); ctx.lineTo(this.x, this.y + this.h); ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#00d2ff'; ctx.shadowBlur = 15; ctx.shadowColor = '#00d2ff';
+        ctx.beginPath(); ctx.moveTo(this.x + this.w/2, this.y); ctx.lineTo(this.x + this.w, this.y + this.h); ctx.lineTo(this.x, this.y + this.h); ctx.fill(); ctx.shadowBlur = 0;
       }
     }
 
@@ -294,14 +335,12 @@
     }
 
     function checkCollisions() {
-      bullets.forEach(b => {
-        enemies.forEach(e => {
-          if (b.active && e.active && b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.h + b.y > e.y) {
-            b.active = false; e.active = false; score += 10;
-            for(let i=0; i<10; i++) particles.push(new Particle(e.x + e.w/2, e.y + e.h/2));
-          }
-        });
-      });
+      bullets.forEach(b => { enemies.forEach(e => {
+        if (b.active && e.active && b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.h + b.y > e.y) {
+          b.active = false; e.active = false; score += 10;
+          for(let i=0; i<10; i++) particles.push(new Particle(e.x + e.w/2, e.y + e.h/2));
+        }
+      });});
       enemies.forEach(e => {
         if (e.active && player.x < e.x + e.w && player.x + player.w > e.x && player.y < e.y + e.h && player.h + player.y > e.y) {
           e.active = false; player.hp -= 20;
@@ -312,7 +351,7 @@
 
     async function gameOver() {
       isPlaying = false;
-      if (score > userData.score) {
+      if (score > (userData.score || 0)) {
         await update(ref(database, `users/${currentUser.uid}`), { score: score });
         userData.score = score;
       }
@@ -323,28 +362,18 @@
     function loop() {
       if (!isPlaying) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
       player.update(); player.draw();
-      
       if (Math.random() < 0.05) enemies.push(new Enemy());
-
       [bullets, enemies, particles].forEach(arr => {
-        for (let i = arr.length - 1; i >= 0; i--) {
-          arr[i].update(); arr[i].draw();
-          if (arr[i].active === false || arr[i].life <= 0) arr.splice(i, 1);
-        }
+        for (let i = arr.length - 1; i >= 0; i--) { arr[i].update(); arr[i].draw(); if (arr[i].active === false || arr[i].life <= 0) arr.splice(i, 1); }
       });
-
       checkCollisions();
-      
       document.getElementById('score-display').innerText = score;
       document.getElementById('hp-display').innerText = player.hp;
       if (player.hp <= 0) gameOver();
-      
       requestAnimationFrame(loop);
     }
 
-    // Launch Game
     document.getElementById('play-btn').addEventListener('click', () => {
       showView('game-view');
       canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -352,10 +381,7 @@
       loop();
     });
 
-    // Abort Mission
     document.getElementById('quit-btn').addEventListener('click', () => { player.hp = 0; });
-    
-    // Handle Window Resize dynamically for Canvas
     window.addEventListener('resize', () => { if(isPlaying){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }});
   </script>
 </body>
