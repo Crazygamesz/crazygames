@@ -105,8 +105,8 @@
     .play-btn { background: var(--sw-cyan); color: #000; padding: 16px 36px; border-radius: 14px; font-size: 14px; font-weight: 900; border: none; cursor: pointer; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; transition: var(--transition); }
     .play-btn:hover { background: #fff; transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0, 229, 255, 0.3); }
 
-    /* MODALS & GAME UI */
-    .modal { display: none; position: fixed; inset: 0; background: rgba(2, 0, 5, 0.95); backdrop-filter: blur(25px); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
+    /* MODALS & GAME UI (z-index higher than maintenanceScreen) */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(2, 0, 5, 0.95); backdrop-filter: blur(25px); z-index: 200000; flex-direction: column; align-items: center; justify-content: center; }
     .modal.active { display: flex; }
     .modal-box { background: var(--bg-panel); border: 1px solid var(--glass-border); border-radius: 24px; width: 650px; max-width: 90%; padding: 40px; position: relative; box-shadow: 0 30px 80px rgba(0,0,0,0.8); max-height: 85vh; overflow-y: auto; }
     .close-btn { position: absolute; top: 24px; right: 24px; background: rgba(255,255,255,0.05); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); z-index: 50; }
@@ -182,8 +182,10 @@
 </head>
 <body>
 
+  <!-- HYPERSPACE BACKGROUND -->
   <canvas id="bgCanvas"></canvas>
 
+  <!-- MAINTENANCE SCREEN OVERLAY -->
   <div id="maintenanceScreen">
     <i class="ph-fill ph-wrench"></i>
     <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 10px; color: #fff;">SYSTEM UNDER MAINTENANCE</h1>
@@ -194,6 +196,7 @@
     </div>
   </div>
 
+  <!-- SECURE AUTHENTICATION GATE -->
   <div id="authGate">
     <div class="gate-box">
       <div class="gate-logo"><i class="ph-fill ph-intersect"></i> SPACEWAVES</div>
@@ -221,6 +224,7 @@
     </div>
   </div>
 
+  <!-- ADMIN AUTH MODAL -->
   <div class="modal" id="adminAuthModal">
     <div class="modal-box" style="width: 420px;">
       <button class="close-btn" onclick="closeModal('adminAuthModal')"><i class="ph ph-x"></i></button>
@@ -240,6 +244,7 @@
     </div>
   </div>
 
+  <!-- ADMIN COMMAND PANEL MODAL -->
   <div class="modal" id="adminPanelModal">
     <div class="modal-box" style="width: 800px;">
       <button class="close-btn" onclick="closeModal('adminPanelModal')"><i class="ph ph-x"></i></button>
@@ -248,6 +253,7 @@
       </h3>
       <p style="color:var(--text-muted); font-size:13px; margin-bottom: 24px;">Manage system maintenance, user accounts, edit/delete scores, and ban cheaters.</p>
       
+      <!-- Maintenance Mode Box -->
       <div style="background: rgba(255,0,85,0.08); border: 1px solid var(--sw-pink); padding: 18px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
         <div>
           <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom: 4px;">Global Maintenance Mode</div>
@@ -256,6 +262,7 @@
         <input type="checkbox" id="maintToggle" onchange="toggleMaintenanceMode(this)" style="width:24px; height:24px; accent-color: var(--sw-pink); cursor:pointer;">
       </div>
 
+      <!-- User & Score Management Table -->
       <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--sw-cyan); letter-spacing: 2px; margin-bottom: 12px;">Registered Users & High Scores Management</div>
       <div style="max-height: 350px; overflow-y: auto; border: 1px solid var(--glass-border); border-radius: 12px;">
         <table class="lb-table" style="margin-top: 0;">
@@ -273,6 +280,7 @@
     </div>
   </div>
 
+  <!-- MAIN DASHBOARD -->
   <div id="appLayout">
     <nav class="sidebar">
       <div class="brand"><i class="ph-fill ph-intersect"></i> SPACEWAVES</div>
@@ -308,6 +316,7 @@
     </main>
   </div>
 
+  <!-- LEADERBOARD MODAL -->
   <div class="modal" id="leaderboardModal">
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal('leaderboardModal')"><i class="ph ph-x"></i></button>
@@ -321,10 +330,12 @@
     </div>
   </div>
 
+  <!-- GAME MODAL -->
   <div class="modal" id="gameModal">
     <div class="modal-box">
       <button class="close-btn" id="gameCloseBtn" onclick="closeModal('gameModal')"><i class="ph ph-x"></i></button>
       
+      <!-- IN-GAME HUD -->
       <div id="spacewavesHud">
         <div class="hud-left">
           <div class="sw-score-display">
@@ -343,6 +354,7 @@
         </div>
       </div>
 
+      <!-- OVERLAYS -->
       <div id="crashOverlay" class="overlay-msg">
         <h2 style="color: var(--sw-pink); text-shadow: 0 0 30px rgba(255,0,85,0.6);">CRASHED</h2>
         <p id="crashDist">Distance: 0m</p>
@@ -355,6 +367,7 @@
         <div class="sub">Press SPACE or ESC to Menu</div>
       </div>
 
+      <!-- START MENU OVERLAY -->
       <div id="spacewavesMenu">
         <div class="sw-title"><i class="ph-fill ph-intersect" style="color: var(--sw-cyan)"></i> SELECT SECTOR</div>
         <div class="level-grid">
@@ -380,6 +393,7 @@
           </div>
         </div>
 
+        <!-- INSTRUCTIONS & WHAT IS INCLUDED/NOT -->
         <div class="info-panel">
           <div class="info-title"><i class="ph-fill ph-info"></i> How to Play & Sector Mechanics Guide</div>
           <div class="info-grid">
