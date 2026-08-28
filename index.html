@@ -189,7 +189,6 @@
       showView('auth-view');
     }
 
-    // Pure Username Login
     document.getElementById('login-btn').addEventListener('click', async () => {
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value;
@@ -232,7 +231,6 @@
       showView('dashboard-view');
     });
 
-    // Pure Username Signup
     document.getElementById('signup-btn').addEventListener('click', async () => {
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value;
@@ -256,7 +254,7 @@
         return;
       }
 
-      const newUserId = 'user_' + Date.now() + Math.random().toString(36.substring(2, 7));
+      const newUserId = 'user_' + Date.now() + Math.random().toString(36).substring(2, 7);
       const newUser = { username: u, password: p, score: 0, role: 'player', isBanned: false };
 
       await set(ref(database, `users/${newUserId}`), newUser);
@@ -275,7 +273,6 @@
       document.getElementById('admin-btn').style.display = (userData?.role === 'admin') ? 'block' : 'none';
     }
 
-    // Admin Systems
     onValue(ref(database, 'global/announcement'), (snapshot) => {
       const msg = snapshot.val();
       const box = document.getElementById('global-announcement');
@@ -407,7 +404,6 @@
     document.getElementById('quit-btn').addEventListener('click', () => { player.hp = 0; });
     window.addEventListener('resize', () => { if(isPlaying){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }});
 
-    // Initialize session check on load
     checkSession();
   </script>
 </body>
