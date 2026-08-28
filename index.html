@@ -182,10 +182,8 @@
 </head>
 <body>
 
-  <!-- HYPERSPACE BACKGROUND -->
   <canvas id="bgCanvas"></canvas>
 
-  <!-- MAINTENANCE SCREEN OVERLAY -->
   <div id="maintenanceScreen">
     <i class="ph-fill ph-wrench"></i>
     <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 10px; color: #fff;">SYSTEM UNDER MAINTENANCE</h1>
@@ -193,7 +191,6 @@
     <button class="gate-btn" onclick="location.reload()" style="width: 200px; padding: 12px;">Retry Connection</button>
   </div>
 
-  <!-- SECURE AUTHENTICATION GATE -->
   <div id="authGate">
     <div class="gate-box">
       <div class="gate-logo"><i class="ph-fill ph-intersect"></i> SPACEWAVES</div>
@@ -220,7 +217,6 @@
     </div>
   </div>
 
-  <!-- ADMIN AUTH MODAL -->
   <div class="modal" id="adminAuthModal">
     <div class="modal-box" style="width: 420px;">
       <button class="close-btn" onclick="closeModal('adminAuthModal')"><i class="ph ph-x"></i></button>
@@ -240,7 +236,6 @@
     </div>
   </div>
 
-  <!-- ADMIN COMMAND PANEL MODAL -->
   <div class="modal" id="adminPanelModal">
     <div class="modal-box" style="width: 800px;">
       <button class="close-btn" onclick="closeModal('adminPanelModal')"><i class="ph ph-x"></i></button>
@@ -249,7 +244,6 @@
       </h3>
       <p style="color:var(--text-muted); font-size:13px; margin-bottom: 24px;">Manage system maintenance, user accounts, edit/delete scores, and ban cheaters.</p>
       
-      <!-- Maintenance Mode Box -->
       <div style="background: rgba(255,0,85,0.08); border: 1px solid var(--sw-pink); padding: 18px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
         <div>
           <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom: 4px;">Global Maintenance Mode</div>
@@ -258,7 +252,6 @@
         <input type="checkbox" id="maintToggle" onchange="toggleMaintenanceMode(this)" style="width:24px; height:24px; accent-color: var(--sw-pink); cursor:pointer;">
       </div>
 
-      <!-- User & Score Management Table -->
       <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--sw-cyan); letter-spacing: 2px; margin-bottom: 12px;">Registered Users & High Scores Management</div>
       <div style="max-height: 350px; overflow-y: auto; border: 1px solid var(--glass-border); border-radius: 12px;">
         <table class="lb-table" style="margin-top: 0;">
@@ -276,7 +269,6 @@
     </div>
   </div>
 
-  <!-- MAIN DASHBOARD -->
   <div id="appLayout">
     <nav class="sidebar">
       <div class="brand"><i class="ph-fill ph-intersect"></i> SPACEWAVES</div>
@@ -312,7 +304,6 @@
     </main>
   </div>
 
-  <!-- LEADERBOARD MODAL -->
   <div class="modal" id="leaderboardModal">
     <div class="modal-box">
       <button class="close-btn" onclick="closeModal('leaderboardModal')"><i class="ph ph-x"></i></button>
@@ -326,12 +317,10 @@
     </div>
   </div>
 
-  <!-- GAME MODAL -->
   <div class="modal" id="gameModal">
     <div class="modal-box">
       <button class="close-btn" id="gameCloseBtn" onclick="closeModal('gameModal')"><i class="ph ph-x"></i></button>
       
-      <!-- IN-GAME HUD -->
       <div id="spacewavesHud">
         <div class="hud-left">
           <div class="sw-score-display">
@@ -350,7 +339,6 @@
         </div>
       </div>
 
-      <!-- OVERLAYS -->
       <div id="crashOverlay" class="overlay-msg">
         <h2 style="color: var(--sw-pink); text-shadow: 0 0 30px rgba(255,0,85,0.6);">CRASHED</h2>
         <p id="crashDist">Distance: 0m</p>
@@ -363,7 +351,6 @@
         <div class="sub">Press SPACE or ESC to Menu</div>
       </div>
 
-      <!-- START MENU OVERLAY -->
       <div id="spacewavesMenu">
         <div class="sw-title"><i class="ph-fill ph-intersect" style="color: var(--sw-cyan)"></i> SELECT SECTOR</div>
         <div class="level-grid">
@@ -389,7 +376,6 @@
           </div>
         </div>
 
-        <!-- INSTRUCTIONS & WHAT IS INCLUDED/NOT -->
         <div class="info-panel">
           <div class="info-title"><i class="ph-fill ph-info"></i> How to Play & Sector Mechanics Guide</div>
           <div class="info-grid">
@@ -428,21 +414,31 @@
     }
     checkMaintenanceStatus();
 
+    // Robust case-insensitive ban lookup
+    function getActiveBanReason(username) {
+      if (!username) return null;
+      let bans = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+      for (let bUser in bans) {
+        if (bUser.toLowerCase() === username.toLowerCase()) {
+          return bans[bUser];
+        }
+      }
+      return null;
+    }
+
     function checkAuth() {
       checkMaintenanceStatus();
       if (!currentUser) { 
         document.getElementById('authGate').classList.remove('hidden'); 
       } else {
-        // Verify if user is banned
-        let bans = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
-        if (bans[currentUser]) {
-          let reason = bans[currentUser];
+        let banReason = getActiveBanReason(currentUser);
+        if (banReason) {
           localStorage.removeItem('spacewaves_active_session');
           currentUser = null;
           document.getElementById('authGate').classList.remove('hidden');
           const alertBox = document.getElementById('banAlertBox');
           alertBox.style.display = 'block';
-          alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> Your account has been banned.<br><b>Reason:</b> ${reason}`;
+          alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> Your account has been banned.<br><b>Reason:</b> ${banReason}`;
           return;
         }
 
@@ -452,30 +448,49 @@
       }
     }
 
+    // Real-time active session ban monitor (kicks out immediately if banned while logged in)
+    setInterval(() => {
+      if (currentUser) {
+        let banReason = getActiveBanReason(currentUser);
+        if (banReason) {
+          localStorage.removeItem('spacewaves_active_session');
+          currentUser = null;
+          document.getElementById('authGate').classList.remove('hidden');
+          const alertBox = document.getElementById('banAlertBox');
+          alertBox.style.display = 'block';
+          alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> Your account has been banned.<br><b>Reason:</b> ${banReason}`;
+        }
+      }
+    }, 1000);
+
     function handleAccountGate(e) {
       e.preventDefault();
       const user = document.getElementById('gateUsername').value.trim();
       const pass = document.getElementById('gatePassword').value.trim();
       
-      // Check if user is banned before logging in
-      let bans = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
-      if (bans[user]) {
+      // Check if user is banned
+      let banReason = getActiveBanReason(user);
+      if (banReason) {
         const alertBox = document.getElementById('banAlertBox');
         alertBox.style.display = 'block';
-        alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> This account is banned.<br><b>Reason:</b> ${bans[user]}`;
+        alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> This account is banned.<br><b>Reason:</b> ${banReason}`;
         return;
       }
 
       let usersDB = JSON.parse(localStorage.getItem('spacewaves_accounts')) || {};
       
-      if (usersDB[user]) {
-        if (usersDB[user] !== pass) { alert('ACCESS DENIED: Incorrect password.'); return; }
+      // Case-insensitive user key search
+      let matchedKey = Object.keys(usersDB).find(k => k.toLowerCase() === user.toLowerCase());
+
+      if (matchedKey) {
+        if (usersDB[matchedKey] !== pass) { alert('ACCESS DENIED: Incorrect password.'); return; }
+        currentUser = matchedKey;
       } else {
         usersDB[user] = pass;
         localStorage.setItem('spacewaves_accounts', JSON.stringify(usersDB));
+        currentUser = user;
       }
       
-      currentUser = user; 
       localStorage.setItem('spacewaves_active_session', currentUser);
       document.getElementById('gatePassword').value = ''; 
       document.getElementById('banAlertBox').style.display = 'none';
@@ -512,7 +527,6 @@
 
     function openAdminPanel() {
       openModal('adminPanelModal');
-      // Set maintenance toggle state
       const isMaint = localStorage.getItem('spacewaves_maintenance') === 'true';
       document.getElementById('maintToggle').checked = isMaint;
       renderAdminUserTable();
@@ -522,7 +536,6 @@
       const tbody = document.getElementById('adminUserTableBody');
       const usersDB = JSON.parse(localStorage.getItem('spacewaves_accounts')) || {};
       const scoresDB = JSON.parse(localStorage.getItem('spacewaves_highscores')) || {};
-      const bansDB = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
 
       const usernames = Object.keys(usersDB);
       if (usernames.length === 0) {
@@ -533,8 +546,9 @@
       tbody.innerHTML = '';
       usernames.forEach(username => {
         let score = scoresDB[username] !== undefined ? scoresDB[username] + 'm' : 'No Score';
-        let isBanned = !!bansDB[username];
-        let statusBadge = isBanned ? `<span style="color:var(--sw-pink); font-size:11px; font-weight:900;">BANNED</span>` : `<span style="color:var(--sw-cyan); font-size:11px; font-weight:700;">ACTIVE</span>`;
+        let banReason = getActiveBanReason(username);
+        let isBanned = !!banReason;
+        let statusBadge = isBanned ? `<span style="color:var(--sw-pink); font-size:11px; font-weight:900;" title="${banReason}">BANNED</span>` : `<span style="color:var(--sw-cyan); font-size:11px; font-weight:700;">ACTIVE</span>`;
         
         tbody.innerHTML += `
           <tr>
@@ -592,7 +606,12 @@
     function adminUnbanUser(username) {
       if (confirm(`Unban user '${username}'?`)) {
         let bansDB = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
-        delete bansDB[username];
+        // Remove matching keys case-insensitively
+        for (let bUser in bansDB) {
+          if (bUser.toLowerCase() === username.toLowerCase()) {
+            delete bansDB[bUser];
+          }
+        }
         localStorage.setItem('spacewaves_bans', JSON.stringify(bansDB));
         renderAdminUserTable();
       }
@@ -701,7 +720,7 @@
 
     function startSpacewavesLevel(lvlId) {
       document.getElementById('spacewavesMenu').style.display = 'none';
-      document.getElementById('gameCloseBtn').style.display = 'none'; // hide X during gameplay
+      document.getElementById('gameCloseBtn').style.display = 'none';
       document.getElementById('spacewavesHud').style.display = 'flex';
       
       const cfg = LEVEL_CONFIG[lvlId];
@@ -778,9 +797,7 @@
             case 6: // Floating block with precisely positioned spikes
               let blockY = 240;
               this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: blockY, w: bw, h: 110 });
-              // Spike on top of floating block (pointing UP)
               this.obstacles.push({ type: 'spike', ground: blockY, x: this.lastGeneratedX + 30, count: 1, isUp: true });
-              // Spike under floating block (pointing DOWN)
               this.obstacles.push({ type: 'spike', ground: blockY + 110, x: this.lastGeneratedX + bw - 70, count: 1, isUp: false });
               this.lastGeneratedX += bw + gap; break;
           }
@@ -816,7 +833,6 @@
           } else {
             this.generateObstacles();
             
-            // Determine ground boundaries based on block riding rules
             let currentGround = this.bottomBoundary;
             let currentCeil = this.topBoundary;
 
@@ -871,7 +887,7 @@
               ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
               for(let ix = 0; ix < obs.w; ix += 30) { ctx.beginPath(); ctx.moveTo(sx + ix, obs.y); ctx.lineTo(sx + ix, obs.y + obs.h); ctx.stroke(); }
             } else if (obs.type === 'spike') {
-              let isTop = obs.isUp; // true = points up, false = points down
+              let isTop = obs.isUp; 
               let sy = obs.ground === 'top' ? this.topBoundary : (obs.ground === 'bottom' ? this.bottomBoundary : obs.ground);
               
               for(let i=0; i<obs.count; i++) {
@@ -885,12 +901,12 @@
           }
         });
 
-        // Floor / Ceiling Boundary Lines
+        // Boundaries
         ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.moveTo(0, this.topBoundary); ctx.lineTo(canvas.width, this.topBoundary); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, this.bottomBoundary); ctx.lineTo(canvas.width, this.bottomBoundary); ctx.stroke();
 
-        // Glow Trail
+        // Trail
         if (this.trail.length > 1) {
           ctx.save();
           ctx.shadowColor = this.config.color; ctx.shadowBlur = 15;
@@ -936,17 +952,15 @@
             let bx1 = sx; let bx2 = sx + obs.w;
             let by1 = obs.y; let by2 = obs.y + obs.h;
             
-            // If Level 1 with block riding enabled, allow riding on the exact top surface safely
             if (this.config.allowBlockRiding && Math.abs(py2 - by1) < 8 && px2 > bx1 + 4 && px1 < bx2 - 4 && this.y <= by1 + 4) {
-              continue; // Safe ride on top!
+              continue; 
             }
 
-            // Otherwise, block is deadly on sides, bottom, or for levels where riding is disabled
             if (px2 > bx1 && px1 < bx2 && py2 > by1 && py1 < by2) {
               this.crash(); return;
             }
           } else if (obs.type === 'spike') {
-            let isTop = obs.isUp; // true = points up (base at bottom), false = points down (base at top)
+            let isTop = obs.isUp; 
             let sy = obs.ground === 'top' ? this.topBoundary : (obs.ground === 'bottom' ? this.bottomBoundary : obs.ground);
             
             for(let i=0; i<obs.count; i++) {
