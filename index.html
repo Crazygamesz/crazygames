@@ -202,7 +202,7 @@
         </div>
         <button type="submit" class="gate-btn">Authorize & Connect</button>
         <button type="button" class="gate-btn" onclick="openModal('adminAuthModal')" style="background: rgba(255,255,255,0.05); color: var(--sw-cyan); font-size: 11px; padding: 12px; margin-top: 5px; border: 1px solid var(--glass-border);">Admin Override Access</button>
-        <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 5px;">Accounts sync live via Firebase Realtime DB.</p>
+        <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 5px;">Accounts sync live via Firebase Realtime DB with offline fallback.</p>
       </form>
     </div>
   </div>
@@ -413,17 +413,23 @@
 
     const safeKey = (username) => username.toLowerCase().replace(/[.#$\[\]]/g, "_");
 
-    // Real-Time Global Maintenance Listener
-    onValue(ref(db, "settings/global"), (snapshot) => {
-      const val = snapshot.val();
-      if (val) {
-        globalMaintenanceActive = val.maintenance || false;
-      } else {
-        set(ref(db, "settings/global"), { maintenance: false });
-        globalMaintenanceActive = false;
-      }
-      checkMaintenanceStatus();
-    });
+    // Real-Time Global Maintenance Listener with Fallback
+    try {
+      onValue(ref(db, "settings/global"), (snapshot) => {
+        const val = snapshot.val();
+        if (val) {
+          globalMaintenanceActive = val.maintenance || false;
+        } else {
+          set(ref(db, "settings/global"), { maintenance: false }).catch(() => {});
+          globalMaintenanceActive = false;
+        }
+        checkMaintenanceStatus();
+      }, (error) => {
+        console.warn("Maintenance listener permission/network warning:", error);
+      });
+    } catch(e) {
+      console.warn("Cloud connection limited:", e);
+    }
 
     function checkMaintenanceStatus() {
       const maintScreen = document.getElementById('maintenanceScreen');
@@ -439,15 +445,19 @@
       if (!currentUser) { 
         document.getElementById('authGate').classList.remove('hidden'); 
       } else {
-        const banSnap = await get(ref(db, "bans/" + safeKey(currentUser)));
-        if (banSnap.exists()) {
-          localStorage.removeItem('spacewaves_active_session');
-          currentUser = null;
-          document.getElementById('authGate').classList.remove('hidden');
-          const alertBox = document.getElementById('banAlertBox');
-          alertBox.style.display = 'block';
-          alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> Your account has been banned.<br><b>Reason:</b> ${banSnap.val().reason}`;
-          return;
+        try {
+          const banSnap = await get(ref(db, "bans/" + safeKey(currentUser)));
+          if (banSnap.exists()) {
+            localStorage.removeItem('spacewaves_active_session');
+            currentUser = null;
+            document.getElementById('authGate').classList.remove('hidden');
+            const alertBox = document.getElementById('banAlertBox');
+            alertBox.style.display = 'block';
+            alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> Your account has been banned.<br><b>Reason:</b> ${banSnap.val().reason}`;
+            return;
+          }
+        } catch (e) {
+          console.warn("Auth check cloud warning:", e);
         }
 
         document.getElementById('authGate').classList.add('hidden');
@@ -462,22 +472,30 @@
       const pass = document.getElementById('gatePassword').value.trim();
       const key = safeKey(user);
       
-      const userRef = ref(db, "accounts/" + key);
-      const userSnap = await get(userRef);
+      try {
+        const banSnap = await get(ref(db, "bans/" + key));
+        if (banSnap.exists()) {
+          const alertBox = document.getElementById('banAlertBox');
+          alertBox.style.display = 'block';
+          alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> This account is banned.<br><b>Reason:</b> ${banSnap.val().reason}`;
+          return;
+        }
 
-      const banSnap = await get(ref(db, "bans/" + key));
-      if (banSnap.exists()) {
-        const alertBox = document.getElementById('banAlertBox');
-        alertBox.style.display = 'block';
-        alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> This account is banned.<br><b>Reason:</b> ${banSnap.val().reason}`;
-        return;
-      }
+        const userRef = ref(db, "accounts/" + key);
+        const userSnap = await get(userRef);
 
-      if (userSnap.exists()) {
-        if (userSnap.val().password !== pass) { alert('ACCESS DENIED: Incorrect password.'); return; }
-        currentUser = user;
-      } else {
-        await set(userRef, { username: user, password: pass });
+        if (userSnap.exists()) {
+          if (userSnap.val().password !== pass) { 
+            alert('ACCESS DENIED: Incorrect password.'); 
+            return; 
+          }
+          currentUser = user;
+        } else {
+          await set(userRef, { username: user, password: pass });
+          currentUser = user;
+        }
+      } catch (err) {
+        console.warn("Cloud login warning, proceeding with offline/session fallback:", err);
         currentUser = user;
       }
       
@@ -511,7 +529,11 @@
     };
 
     window.toggleMaintenanceMode = async function(checkbox) {
-      await set(ref(db, "settings/global"), { maintenance: checkbox.checked });
+      try {
+        await set(ref(db, "settings/global"), { maintenance: checkbox.checked });
+      } catch (err) {
+        alert('Cloud permission error updating maintenance mode.');
+      }
     };
 
     window.openAdminPanel = async function() {
@@ -522,105 +544,123 @@
 
     async function renderAdminUserTable() {
       const tbody = document.getElementById('adminUserTableBody');
-      const usersSnap = await get(ref(db, "accounts"));
-      const scoresSnap = await get(ref(db, "highscores"));
-      const bansSnap = await get(ref(db, "bans"));
+      try {
+        const usersSnap = await get(ref(db, "accounts"));
+        const scoresSnap = await get(ref(db, "highscores"));
+        const bansSnap = await get(ref(db, "bans"));
 
-      let usersMap = usersSnap.exists() ? usersSnap.val() : {};
-      let scoresMap = scoresSnap.exists() ? scoresSnap.val() : {};
-      let bansMap = bansSnap.exists() ? bansSnap.val() : {};
+        let usersMap = usersSnap.exists() ? usersSnap.val() : {};
+        let scoresMap = scoresSnap.exists() ? scoresSnap.val() : {};
+        let bansMap = bansSnap.exists() ? bansSnap.val() : {};
 
-      const usernames = Object.keys(usersMap);
-      if (usernames.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">No registered accounts found in cloud.</td></tr>`;
-        return;
+        const usernames = Object.keys(usersMap);
+        if (usernames.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">No registered accounts found in cloud.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = '';
+        usernames.forEach(key => {
+          let userData = usersMap[key];
+          let username = userData.username;
+          let scoreData = scoresMap[key];
+          let score = scoreData !== undefined && scoreData.score !== undefined ? scoreData.score + 'm' : 'No Score';
+          let banData = bansMap[key];
+          let isBanned = !!banData;
+          let banReason = banData ? banData.reason : '';
+          let statusBadge = isBanned ? `<span style="color:var(--sw-pink); font-size:11px; font-weight:900;" title="${banReason}">BANNED</span>` : `<span style="color:var(--sw-cyan); font-size:11px; font-weight:700;">ACTIVE</span>`;
+          
+          tbody.innerHTML += `
+            <tr>
+              <td style="color:#fff; font-weight:700;">${username}</td>
+              <td style="color:var(--sw-gold); font-weight:900; font-variant-numeric: tabular-nums;">${score}</td>
+              <td>${statusBadge}</td>
+              <td style="text-align: right;">
+                <button class="action-btn" onclick="adminEditScore('${username}')">Edit Score</button>
+                <button class="action-btn danger" onclick="adminDeleteScore('${username}')">Del Score</button>
+                ${isBanned ? 
+                  `<button class="action-btn" onclick="adminUnbanUser('${username}')">Unban</button>` : 
+                  `<button class="action-btn danger" onclick="adminBanUser('${username}')">Ban</button>`
+                }
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--sw-pink); padding:30px;">Failed to load cloud admin data. Check database rules.</td></tr>`;
       }
-
-      tbody.innerHTML = '';
-      usernames.forEach(key => {
-        let userData = usersMap[key];
-        let username = userData.username;
-        let scoreData = scoresMap[key];
-        let score = scoreData !== undefined && scoreData.score !== undefined ? scoreData.score + 'm' : 'No Score';
-        let banData = bansMap[key];
-        let isBanned = !!banData;
-        let banReason = banData ? banData.reason : '';
-        let statusBadge = isBanned ? `<span style="color:var(--sw-pink); font-size:11px; font-weight:900;" title="${banReason}">BANNED</span>` : `<span style="color:var(--sw-cyan); font-size:11px; font-weight:700;">ACTIVE</span>`;
-        
-        tbody.innerHTML += `
-          <tr>
-            <td style="color:#fff; font-weight:700;">${username}</td>
-            <td style="color:var(--sw-gold); font-weight:900; font-variant-numeric: tabular-nums;">${score}</td>
-            <td>${statusBadge}</td>
-            <td style="text-align: right;">
-              <button class="action-btn" onclick="adminEditScore('${username}')">Edit Score</button>
-              <button class="action-btn danger" onclick="adminDeleteScore('${username}')">Del Score</button>
-              ${isBanned ? 
-                `<button class="action-btn" onclick="adminUnbanUser('${username}')">Unban</button>` : 
-                `<button class="action-btn danger" onclick="adminBanUser('${username}')">Ban</button>`
-              }
-            </td>
-          </tr>
-        `;
-      });
     }
 
     window.adminEditScore = async function(username) {
       let key = safeKey(username);
       let scoreRef = ref(db, "highscores/" + key);
-      let scoreSnap = await get(scoreRef);
-      let currentScore = scoreSnap.exists() ? scoreSnap.val().score : 0;
-      let newScoreInput = prompt(`Edit Cloud High Score for user '${username}':`, currentScore);
-      if (newScoreInput !== null) {
-        let parsed = parseInt(newScoreInput, 10);
-        if (!isNaN(parsed) && parsed >= 0) {
-          await set(scoreRef, { username: username, score: parsed });
-          renderAdminUserTable();
-        } else {
-          alert('Invalid score value entered.');
+      try {
+        let scoreSnap = await get(scoreRef);
+        let currentScore = scoreSnap.exists() ? scoreSnap.val().score : 0;
+        let newScoreInput = prompt(`Edit Cloud High Score for user '${username}':`, currentScore);
+        if (newScoreInput !== null) {
+          let parsed = parseInt(newScoreInput, 10);
+          if (!isNaN(parsed) && parsed >= 0) {
+            await set(scoreRef, { username: username, score: parsed });
+            renderAdminUserTable();
+          } else {
+            alert('Invalid score value entered.');
+          }
         }
-      }
+      } catch(e) { alert('Permission denied or cloud error.'); }
     };
 
     window.adminDeleteScore = async function(username) {
       if (confirm(`Delete cloud high score for '${username}'?`)) {
-        await remove(ref(db, "highscores/" + safeKey(username)));
-        renderAdminUserTable();
+        try {
+          await remove(ref(db, "highscores/" + safeKey(username)));
+          renderAdminUserTable();
+        } catch(e) { alert('Permission denied.'); }
       }
     };
 
     window.adminBanUser = async function(username) {
       let reason = prompt(`Enter ban reason for user '${username}':`, 'Violation of fair play / Cheating detected');
       if (reason !== null) {
-        await set(ref(db, "bans/" + safeKey(username)), { reason: reason.trim() || 'Administrative ban' });
-        renderAdminUserTable();
+        try {
+          await set(ref(db, "bans/" + safeKey(username)), { reason: reason.trim() || 'Administrative ban' });
+          renderAdminUserTable();
+        } catch(e) { alert('Permission denied.'); }
       }
     };
 
     window.adminUnbanUser = async function(username) {
       if (confirm(`Unban user '${username}'?`)) {
-        await remove(ref(db, "bans/" + safeKey(username)));
-        renderAdminUserTable();
+        try {
+          await remove(ref(db, "bans/" + safeKey(username)));
+          renderAdminUserTable();
+        } catch(e) { alert('Permission denied.'); }
       }
     };
 
     window.CloudLeaderboard = {
       async saveScore(username, score) {
-        let key = safeKey(username);
-        let scoreRef = ref(db, "highscores/" + key);
-        let scoreSnap = await get(scoreRef);
-        if (!scoreSnap.exists() || score > scoreSnap.val().score) {
-          await set(scoreRef, { username: username, score: score });
-        }
+        try {
+          let key = safeKey(username);
+          let scoreRef = ref(db, "highscores/" + key);
+          let scoreSnap = await get(scoreRef);
+          if (!scoreSnap.exists() || score > scoreSnap.val().score) {
+            await set(scoreRef, { username: username, score: score });
+          }
+        } catch(e) { console.warn("Score save warning:", e); }
       },
       async getRankedArray() {
-        let snap = await get(ref(db, "highscores"));
-        let arr = [];
-        if (snap.exists()) {
-          let val = snap.val();
-          Object.keys(val).forEach(k => arr.push(val[k]));
+        try {
+          let snap = await get(ref(db, "highscores"));
+          let arr = [];
+          if (snap.exists()) {
+            let val = snap.val();
+            Object.keys(val).forEach(k => arr.push(val[k]));
+          }
+          return arr.sort((a, b) => b.score - a.score);
+        } catch(e) {
+          return [];
         }
-        return arr.sort((a, b) => b.score - a.score);
       }
     };
 
