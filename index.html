@@ -140,7 +140,6 @@
   <!-- MAIN SCRIPT -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -155,10 +154,9 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const database = getDatabase(app);
 
-    let currentUser = null;
+    let currentUserId = localStorage.getItem('spacewave_uid') || null;
     let userData = null;
 
     function showView(viewId) {
@@ -166,85 +164,110 @@
       document.getElementById(viewId).classList.add('active');
     }
 
-    // Converts username to a valid dummy email for Firebase Auth
-    function getAuthEmail(username) {
-      const sanitized = username.toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (sanitized.length < 3) throw new Error("Username must be at least 3 letters/numbers.");
-      return sanitized + "@spacewave.local";
-    }
-
-    function handleAuthError(err) {
-      const errBox = document.getElementById('auth-error');
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found') {
-        errBox.innerText = "Account not found. Click 'Create Account' first.";
-      } else if (err.code === 'auth/email-already-in-use') {
-        errBox.innerText = "Username already taken. Please Log In or choose another.";
-      } else if (err.code === 'auth/weak-password') {
-        errBox.innerText = "Password must be at least 6 characters.";
-      } else if (err.code === 'auth/configuration-not-found') {
-        errBox.innerText = "ERROR: Email/Password login is NOT enabled in your Firebase Console.";
-      } else {
-        errBox.innerText = err.message;
-      }
-    }
-
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        const snapshot = await get(ref(database, `users/${user.uid}`));
-        
-        if (snapshot.exists()) {
-          userData = snapshot.val();
+    async function checkSession() {
+      if (currentUserId) {
+        const snap = await get(ref(database, `users/${currentUserId}`));
+        if (snap.exists()) {
+          userData = snap.val();
           if (userData.isBanned) {
             alert("SECURITY ALERT: Your pilot license has been permanently revoked.");
-            signOut(auth);
+            logoutUser();
             return;
           }
+          setupDashboard();
+          showView('dashboard-view');
+          return;
         }
-        setupDashboard();
-        showView('dashboard-view');
-      } else {
-        currentUser = null;
-        userData = null;
-        showView('auth-view');
       }
-    });
+      showView('auth-view');
+    }
 
-    // Login logic
-    document.getElementById('login-btn').addEventListener('click', () => {
+    function logoutUser() {
+      localStorage.removeItem('spacewave_uid');
+      currentUserId = null;
+      userData = null;
+      showView('auth-view');
+    }
+
+    // Pure Username Login
+    document.getElementById('login-btn').addEventListener('click', async () => {
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value;
-      if (!u || !p) { document.getElementById('auth-error').innerText = "Enter username and password."; return; }
-      
-      try {
-        const dummyEmail = getAuthEmail(u);
-        signInWithEmailAndPassword(auth, dummyEmail, p).catch(handleAuthError);
-      } catch(e) {
-        document.getElementById('auth-error').innerText = e.message;
+      const errBox = document.getElementById('auth-error');
+      errBox.innerText = "";
+
+      if (!u || !p) { errBox.innerText = "Enter username and password."; return; }
+
+      const usersSnap = await get(ref(database, 'users'));
+      let foundUserKey = null;
+      let foundUserData = null;
+
+      usersSnap.forEach(child => {
+        const val = child.val();
+        if (val.username && val.username.toLowerCase() === u.toLowerCase()) {
+          foundUserKey = child.key;
+          foundUserData = val;
+        }
+      });
+
+      if (!foundUserKey) {
+        errBox.innerText = "Pilot not found. Click 'Create Account' first.";
+        return;
       }
+
+      if (foundUserData.password !== p) {
+        errBox.innerText = "Incorrect password.";
+        return;
+      }
+
+      if (foundUserData.isBanned) {
+        errBox.innerText = "This pilot account is banned.";
+        return;
+      }
+
+      currentUserId = foundUserKey;
+      userData = foundUserData;
+      localStorage.setItem('spacewave_uid', currentUserId);
+      setupDashboard();
+      showView('dashboard-view');
     });
 
-    // Signup logic
-    document.getElementById('signup-btn').addEventListener('click', () => {
+    // Pure Username Signup
+    document.getElementById('signup-btn').addEventListener('click', async () => {
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value;
-      if (!u || !p) { document.getElementById('auth-error').innerText = "Enter username and password."; return; }
-      
-      try {
-        const dummyEmail = getAuthEmail(u);
-        createUserWithEmailAndPassword(auth, dummyEmail, p)
-          .then((userCredential) => {
-            const newUser = { username: u, score: 0, role: 'player', isBanned: false };
-            set(ref(database, `users/${userCredential.user.uid}`), newUser);
-            userData = newUser;
-          })
-          .catch(handleAuthError);
-      } catch (e) {
-        document.getElementById('auth-error').innerText = e.message;
+      const errBox = document.getElementById('auth-error');
+      errBox.innerText = "";
+
+      if (!u || !p) { errBox.innerText = "Enter username and password."; return; }
+      if (u.length < 3) { errBox.innerText = "Username must be at least 3 characters."; return; }
+      if (p.length < 4) { errBox.innerText = "Password must be at least 4 characters."; return; }
+
+      const usersSnap = await get(ref(database, 'users'));
+      let taken = false;
+      usersSnap.forEach(child => {
+        if (child.val().username && child.val().username.toLowerCase() === u.toLowerCase()) {
+          taken = true;
+        }
+      });
+
+      if (taken) {
+        errBox.innerText = "Username already taken. Please choose another or log in.";
+        return;
       }
+
+      const newUserId = 'user_' + Date.now() + Math.random().toString(36.substring(2, 7));
+      const newUser = { username: u, password: p, score: 0, role: 'player', isBanned: false };
+
+      await set(ref(database, `users/${newUserId}`), newUser);
+      currentUserId = newUserId;
+      userData = newUser;
+      localStorage.setItem('spacewave_uid', currentUserId);
+      setupDashboard();
+      showView('dashboard-view');
     });
 
-    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+    document.getElementById('logout-btn').addEventListener('click', logoutUser);
 
     function setupDashboard() {
       document.getElementById('user-display-name').innerText = userData?.username || "Unknown Pilot";
@@ -352,7 +375,7 @@
     async function gameOver() {
       isPlaying = false;
       if (score > (userData.score || 0)) {
-        await update(ref(database, `users/${currentUser.uid}`), { score: score });
+        await update(ref(database, `users/${currentUserId}`), { score: score });
         userData.score = score;
       }
       setupDashboard();
@@ -383,6 +406,9 @@
 
     document.getElementById('quit-btn').addEventListener('click', () => { player.hp = 0; });
     window.addEventListener('resize', () => { if(isPlaying){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }});
+
+    // Initialize session check on load
+    checkSession();
   </script>
 </body>
 </html>
