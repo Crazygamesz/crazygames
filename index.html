@@ -9,6 +9,10 @@
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
+  <!-- Firebase App & Realtime Database SDKs (Compat versions) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
   <style>
     :root {
       --bg-base: #020005;
@@ -200,7 +204,7 @@
   <div id="authGate">
     <div class="gate-box">
       <div class="gate-logo"><i class="ph-fill ph-intersect"></i> SPACEWAVES</div>
-      <div class="gate-subtitle">Secure High-Score Network</div>
+      <div class="gate-subtitle">Secure Cloud Network</div>
       <div id="banAlertBox" style="display:none; background: rgba(255,0,85,0.15); border: 1px solid var(--sw-pink); color: #fff; padding: 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; text-align: left; line-height: 1.4;"></div>
       <form class="auth-form" onsubmit="handleAccountGate(event)">
         <div class="input-group">
@@ -251,13 +255,13 @@
       <h3 style="color:#fff; font-size:22px; font-weight:900; margin-bottom:6px; display:flex; align-items:center; gap:10px;">
         <i class="ph-fill ph-terminal-window" style="color: var(--sw-cyan)"></i> Admin Command Center
       </h3>
-      <p style="color:var(--text-muted); font-size:13px; margin-bottom: 24px;">Manage system maintenance, user accounts, edit/delete scores, and ban cheaters.</p>
+      <p style="color:var(--text-muted); font-size:13px; margin-bottom: 24px;">Manage global maintenance mode, user accounts, high scores, and active bans synced live across devices.</p>
       
       <!-- Maintenance Mode Box -->
       <div style="background: rgba(255,0,85,0.08); border: 1px solid var(--sw-pink); padding: 18px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
         <div>
           <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom: 4px;">Global Maintenance Mode</div>
-          <div style="font-size:12px; color:var(--text-muted);">When active, non-admin login is locked and maintenance screen is shown.</div>
+          <div style="font-size:12px; color:var(--text-muted);">When active, non-admin logins lock and maintenance screen triggers globally.</div>
         </div>
         <input type="checkbox" id="maintToggle" onchange="toggleMaintenanceMode(this)" style="width:24px; height:24px; accent-color: var(--sw-pink); cursor:pointer;">
       </div>
@@ -304,9 +308,9 @@
       <div class="content">
         <div class="hero">
           <div class="hero-content">
-            <span class="hero-tag"><i class="ph-fill ph-lightning"></i> Master Update Live</span>
+            <span class="hero-tag"><i class="ph-fill ph-lightning"></i> Cloud Synchronized Edition</span>
             <h1>SELECT LEVEL.<br>MASTER THE WAVE.</h1>
-            <p>Level 1 features safe block-riding mechanics. Levels 2, 3, and Endless enforce strict vertical evasion where all structures are lethal. Check the rules per sector before launching.</p>
+            <p>Level 1 features safe block-riding mechanics. Levels 2, 3, and Endless enforce strict vertical evasion where all structures are lethal. Check sector rules before launching.</p>
             <div class="btn-group">
               <button class="play-btn" onclick="launchGame()"><i class="ph-fill ph-play"></i> Open Level Hub</button>
             </div>
@@ -417,25 +421,60 @@
 
   <script>
     /* =========================================================
-       1. SECURE AUTHENTICATION, BANS & MAINTENANCE SYSTEM
+       1. FIREBASE CONFIGURATION & REAL-TIME CLOUD SYNC
+       ========================================================= */
+    const firebaseConfig = {
+      apiKey: "AIzaSyDZt9nls66xzPoWRsykXYE-mzeyyOrl4gg",
+      authDomain: "spacewave-101e8.firebaseapp.com",
+      databaseURL: "https://spacewave-101e8-default-rtdb.firebaseio.com",
+      projectId: "spacewave-101e8",
+      storageBucket: "spacewave-101e8.firebasestorage.app",
+      messagingSenderId: "457788800101",
+      appId: "1:457788800101:web:ec6b22ad8dc2480dfb1a8c",
+      measurementId: "G-BQRZ1XB5Z3"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const rtdb = firebase.database();
+
+    // Memory caches synced with Firebase in real-time across all devices
+    let dbCache = {
+      accounts: {},
+      highscores: {},
+      bans: {},
+      maintenance: false
+    };
+
+    // Set up real-time sync listeners
+    rtdb.ref('spacewaves_accounts').on('value', snap => { dbCache.accounts = snap.val() || {}; });
+    rtdb.ref('spacewaves_highscores').on('value', snap => { 
+      dbCache.highscores = snap.val() || {}; 
+      if(document.getElementById('leaderboardModal').classList.contains('active')) openLeaderboard(); 
+    });
+    rtdb.ref('spacewaves_bans').on('value', snap => { dbCache.bans = snap.val() || {}; });
+    rtdb.ref('spacewaves_maintenance').on('value', snap => { 
+      dbCache.maintenance = snap.val() || false; 
+      checkMaintenanceStatus(); 
+    });
+
+    /* =========================================================
+       2. SECURE AUTHENTICATION, BANS & MAINTENANCE SYSTEM
        ========================================================= */
     let currentUser = localStorage.getItem('spacewaves_active_session');
     let isAdminSession = localStorage.getItem('spacewaves_admin_session') === 'true';
 
     function checkMaintenanceStatus() {
-      const isMaint = localStorage.getItem('spacewaves_maintenance') === 'true';
+      const isMaint = dbCache.maintenance;
       if (isMaint && !isAdminSession) {
         document.getElementById('maintenanceScreen').classList.add('active');
       } else {
         document.getElementById('maintenanceScreen').classList.remove('active');
       }
     }
-    checkMaintenanceStatus();
 
-    // Robust case-insensitive ban lookup
     function getActiveBanReason(username) {
       if (!username) return null;
-      let bans = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+      let bans = dbCache.bans;
       for (let bUser in bans) {
         if (bUser.toLowerCase() === username.toLowerCase()) {
           return bans[bUser];
@@ -466,7 +505,7 @@
       }
     }
 
-    // Real-time active session ban monitor (kicks out immediately if banned while logged in)
+    // Real-time active session ban monitor
     setInterval(() => {
       if (currentUser) {
         let banReason = getActiveBanReason(currentUser);
@@ -486,7 +525,6 @@
       const user = document.getElementById('gateUsername').value.trim();
       const pass = document.getElementById('gatePassword').value.trim();
       
-      // Check if user is banned
       let banReason = getActiveBanReason(user);
       if (banReason) {
         const alertBox = document.getElementById('banAlertBox');
@@ -495,9 +533,7 @@
         return;
       }
 
-      let usersDB = JSON.parse(localStorage.getItem('spacewaves_accounts')) || {};
-      
-      // Case-insensitive user key search
+      let usersDB = dbCache.accounts;
       let matchedKey = Object.keys(usersDB).find(k => k.toLowerCase() === user.toLowerCase());
 
       if (matchedKey) {
@@ -505,7 +541,7 @@
         currentUser = matchedKey;
       } else {
         usersDB[user] = pass;
-        localStorage.setItem('spacewaves_accounts', JSON.stringify(usersDB));
+        rtdb.ref('spacewaves_accounts').set(usersDB);
         currentUser = user;
       }
       
@@ -522,7 +558,9 @@
       currentUser = null; 
       checkAuth(); 
     }
-    checkAuth();
+    
+    // Slight delay to ensure Firebase cache is populated on initial boot
+    setTimeout(checkAuth, 400);
 
     function handleAdminAuth(e) {
       e.preventDefault();
@@ -540,21 +578,19 @@
     }
 
     function toggleMaintenanceMode(checkbox) {
-      localStorage.setItem('spacewaves_maintenance', checkbox.checked ? 'true' : 'false');
-      checkMaintenanceStatus();
+      rtdb.ref('spacewaves_maintenance').set(checkbox.checked);
     }
 
     function openAdminPanel() {
       openModal('adminPanelModal');
-      const isMaint = localStorage.getItem('spacewaves_maintenance') === 'true';
-      document.getElementById('maintToggle').checked = isMaint;
+      document.getElementById('maintToggle').checked = dbCache.maintenance;
       renderAdminUserTable();
     }
 
     function renderAdminUserTable() {
       const tbody = document.getElementById('adminUserTableBody');
-      const usersDB = JSON.parse(localStorage.getItem('spacewaves_accounts')) || {};
-      const scoresDB = JSON.parse(localStorage.getItem('spacewaves_highscores')) || {};
+      const usersDB = dbCache.accounts;
+      const scoresDB = dbCache.highscores;
 
       const usernames = Object.keys(usersDB);
       if (usernames.length === 0) {
@@ -588,14 +624,14 @@
     }
 
     function adminEditScore(username) {
-      let scoresDB = JSON.parse(localStorage.getItem('spacewaves_highscores')) || {};
+      let scoresDB = dbCache.highscores;
       let currentScore = scoresDB[username] || 0;
       let newScoreInput = prompt(`Edit High Score for user '${username}':`, currentScore);
       if (newScoreInput !== null) {
         let parsed = parseInt(newScoreInput, 10);
         if (!isNaN(parsed) && parsed >= 0) {
           scoresDB[username] = parsed;
-          localStorage.setItem('spacewaves_highscores', JSON.stringify(scoresDB));
+          rtdb.ref('spacewaves_highscores').set(scoresDB);
           renderAdminUserTable();
         } else {
           alert('Invalid score value entered.');
@@ -605,9 +641,9 @@
 
     function adminDeleteScore(username) {
       if (confirm(`Are you sure you want to delete the high score for '${username}'?`)) {
-        let scoresDB = JSON.parse(localStorage.getItem('spacewaves_highscores')) || {};
+        let scoresDB = dbCache.highscores;
         delete scoresDB[username];
-        localStorage.setItem('spacewaves_highscores', JSON.stringify(scoresDB));
+        rtdb.ref('spacewaves_highscores').set(scoresDB);
         renderAdminUserTable();
       }
     }
@@ -615,36 +651,36 @@
     function adminBanUser(username) {
       let reason = prompt(`Enter ban reason for user '${username}':`, 'Violation of fair play / Cheating detected');
       if (reason !== null) {
-        let bansDB = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+        let bansDB = dbCache.bans;
         bansDB[username] = reason.trim() || 'Administrative ban';
-        localStorage.setItem('spacewaves_bans', JSON.stringify(bansDB));
+        rtdb.ref('spacewaves_bans').set(bansDB);
         renderAdminUserTable();
       }
     }
 
     function adminUnbanUser(username) {
       if (confirm(`Unban user '${username}'?`)) {
-        let bansDB = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+        let bansDB = dbCache.bans;
         for (let bUser in bansDB) {
           if (bUser.toLowerCase() === username.toLowerCase()) {
             delete bansDB[bUser];
           }
         }
-        localStorage.setItem('spacewaves_bans', JSON.stringify(bansDB));
+        rtdb.ref('spacewaves_bans').set(bansDB);
         renderAdminUserTable();
       }
     }
 
     /* =========================================================
-       2. LEADERBOARD SYSTEM (Endless Mode Only)
+       3. LEADERBOARD SYSTEM (Endless Mode Only)
        ========================================================= */
     const LeaderboardDB = {
-      getScores() { return JSON.parse(localStorage.getItem('spacewaves_highscores')) || {}; },
+      getScores() { return dbCache.highscores; },
       saveScore(username, score) {
         let scores = this.getScores();
         if (!scores[username] || score > scores[username]) {
           scores[username] = score;
-          localStorage.setItem('spacewaves_highscores', JSON.stringify(scores));
+          rtdb.ref('spacewaves_highscores').set(scores);
         }
       },
       getRankedArray() {
@@ -677,7 +713,7 @@
     }
 
     /* =========================================================
-       3. BACKGROUND HYPERSPACE ENGINE
+       4. BACKGROUND HYPERSPACE ENGINE
        ========================================================= */
     const bgCanvas = document.getElementById('bgCanvas');
     const bgCtx = bgCanvas.getContext('2d');
@@ -699,7 +735,7 @@
     renderBg();
 
     /* =========================================================
-       4. HIGH-PERFORMANCE GAME ENGINE
+       5. HIGH-PERFORMANCE GAME ENGINE
        ========================================================= */
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
