@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spacewaves.io | Master Edition</title>
+  <title>Crazy Games</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -193,7 +193,7 @@
   <div id="maintenanceScreen">
     <i class="ph-fill ph-wrench"></i>
     <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 10px; color: #fff;">SYSTEM UNDER MAINTENANCE</h1>
-    <p style="color: var(--text-muted); max-width: 450px; font-size: 15px; line-height: 1.6; margin-bottom: 25px;">The Spacewaves server network is currently undergoing scheduled maintenance or administrative updates. Please check back shortly.</p>
+    <p style="color: var(--text-muted); max-width: 450px; font-size: 15px; line-height: 1.6; margin-bottom: 25px;">The server network is currently undergoing scheduled maintenance or administrative updates. Please check back shortly.</p>
     <div style="display: flex; flex-direction: column; gap: 12px; width: 220px;">
       <button class="gate-btn" onclick="location.reload()" style="width: 100%; padding: 12px;">Retry Connection</button>
       <button class="gate-btn" onclick="openModal('adminAuthModal')" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.08); color: var(--sw-cyan); border: 1px solid var(--glass-border);">Admin Override</button>
@@ -208,14 +208,14 @@
       <div id="banAlertBox" style="display:none; background: rgba(255,0,85,0.15); border: 1px solid var(--sw-pink); color: #fff; padding: 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; text-align: left; line-height: 1.4;"></div>
       <form class="auth-form" onsubmit="handleAccountGate(event)">
         <div class="input-group">
-          <label>GamerTag</label>
+          <label>Username</label>
           <div class="input-wrapper">
             <input type="text" id="gateUsername" placeholder="Enter username..." required minlength="3" maxlength="16" autocomplete="off">
             <i class="ph-fill ph-user"></i>
           </div>
         </div>
         <div class="input-group">
-          <label>Secure Password</label>
+          <label>Password</label>
           <div class="input-wrapper">
             <input type="password" id="gatePassword" placeholder="Enter password..." required minlength="4">
             <i class="ph-fill ph-lock-key"></i>
