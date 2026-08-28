@@ -3,562 +3,1012 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Space Waves | Ultimate Edition</title>
+  <title>Spacewaves.io | Master Edition</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
-    body { background: #050814; color: #fff; overflow: hidden; height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center; }
-    
-    .space-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: radial-gradient(circle at bottom, #1b2735 0%, #090a0f 100%); }
-    
-    .view { display: none; width: 100%; max-width: 900px; padding: 20px; z-index: 10; flex-direction: column; align-items: center; }
-    .view.active { display: flex; animation: fadeIn 0.4s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .login-container, .glass-panel {
-      background: rgba(20, 25, 45, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(0, 210, 255, 0.2); border-radius: 16px;
-      padding: 30px; width: 100%; box-shadow: 0 15px 35px rgba(0,210,255,0.1); text-align: center;
-    }
-    .login-container { max-width: 400px; }
-
-    h2, h3 { 
-      background: -webkit-linear-gradient(#00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-      margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; 
+    :root {
+      --bg-base: #020005;
+      --bg-panel: rgba(10, 2, 18, 0.85);
+      --sw-pink: #ff0055;
+      --sw-cyan: #00e5ff;
+      --sw-purple: #b08dff;
+      --sw-gold: #ffaa00;
+      --text-main: #ffffff;
+      --text-muted: #8b799c;
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
-    .input-group { margin-bottom: 15px; text-align: left; }
-    .input-group input, .input-group select {
-      width: 100%; padding: 12px 15px; background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px;
-      color: #fff; font-size: 16px; outline: none; transition: border-color 0.3s;
-    }
-    .input-group input:focus, .input-group select:focus { border-color: #00d2ff; }
-
-    button {
-      width: 100%; padding: 12px; margin-bottom: 10px;
-      background: linear-gradient(90deg, #00d2ff, #3a7bd5); border: none; border-radius: 8px;
-      color: white; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;
-    }
-    button:hover { opacity: 0.9; transform: scale(0.98); box-shadow: 0 0 15px rgba(0,210,255,0.4); }
-    button.secondary { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
-    button.danger { background: rgba(255, 50, 50, 0.2); border: 1px solid #ff4d4d; color: #ff4d4d; }
-    button.danger:hover { background: #ff4d4d; color: #fff; }
-    button.admin-btn-theme { background: linear-gradient(90deg, #8e44ad, #9b59b6); }
-
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-    th, td { border: 1px solid rgba(0,210,255,0.2); padding: 10px; text-align: left; }
-    th { background: rgba(0,210,255,0.1); color: #00d2ff; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; user-select: none; }
+    body { background-color: var(--bg-base); color: var(--text-main); height: 100vh; overflow: hidden; position: relative; }
     
-    .broadcast-box { background: rgba(255, 200, 0, 0.1); border: 1px solid #ffc800; color: #ffc800; padding: 10px; border-radius: 8px; margin-bottom: 15px; width: 100%; font-size: 14px; }
-    
-    .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; margin-bottom: 20px; }
-    .admin-card { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px solid rgba(155, 89, 182, 0.3); }
+    /* BACKGROUND HYPERSPACE ENGINE */
+    #bgCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
-    #game-view { max-width: 100%; padding: 0; justify-content: center; align-items: center; }
-    canvas { background: transparent; display: block; box-shadow: inset 0 0 50px #000; }
-    #hud { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 20; pointer-events: none; }
-    #hud div { font-size: 24px; font-weight: bold; color: #00d2ff; text-shadow: 0 0 10px #00d2ff; }
-    #quit-btn { position: absolute; bottom: 20px; right: 20px; width: auto; padding: 10px 30px; pointer-events: all; z-index: 20; }
+    /* AUTHENTICATION GATE */
+    #authGate {
+      position: fixed; inset: 0; z-index: 9999;
+      background: radial-gradient(circle at center, rgba(15, 0, 30, 0.95), rgba(2, 0, 5, 1));
+      backdrop-filter: blur(30px);
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    #authGate.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .gate-box {
+      width: 420px;
+      background: var(--bg-panel); border: 1px solid rgba(0,229,255,0.3);
+      border-radius: 20px; padding: 45px 35px; text-align: center;
+      box-shadow: 0 20px 80px rgba(0, 229, 255, 0.15), inset 0 0 20px rgba(0, 229, 255, 0.05);
+      backdrop-filter: blur(20px);
+    }
+    .gate-logo { font-size: 32px; font-weight: 900; color: #fff; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 1px; }
+    .gate-logo i { color: var(--sw-cyan); font-size: 40px; filter: drop-shadow(0 0 10px var(--sw-cyan)); }
+    .gate-subtitle { font-size: 11px; color: var(--sw-cyan); margin-bottom: 30px; text-transform: uppercase; font-weight: 700; letter-spacing: 3px; }
+
+    .auth-form { display: flex; flex-direction: column; gap: 20px; text-align: left; }
+    .input-group label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.5px; margin-bottom: 8px; display: block; }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .input-wrapper i { position: absolute; left: 16px; color: var(--text-muted); font-size: 18px; }
+    .input-group input {
+      width: 100%; background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--glass-border); border-radius: 12px;
+      padding: 14px 16px 14px 44px; color: #fff; font-size: 15px; font-weight: 500; outline: none; transition: var(--transition);
+    }
+    .input-group input:focus { border-color: var(--sw-cyan); background: rgba(0, 229, 255, 0.05); box-shadow: 0 0 15px rgba(0, 229, 255, 0.2); color: var(--sw-cyan); }
+    .input-group input:focus + i { color: var(--sw-cyan); }
+
+    .gate-btn {
+      background: #fff; color: #000; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;
+      padding: 16px; border: none; border-radius: 12px; cursor: pointer; margin-top: 10px; transition: var(--transition);
+    }
+    .gate-btn:hover { background: var(--sw-cyan); transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0, 229, 255, 0.4); }
+
+    /* LAYOUT & DASHBOARD */
+    #appLayout { display: flex; height: 100vh; position: relative; z-index: 5; }
+
+    .sidebar { width: 280px; background: var(--bg-panel); backdrop-filter: blur(25px); border-right: 1px solid var(--glass-border); padding: 30px 20px; display: flex; flex-direction: column; }
+    .brand { font-size: 22px; font-weight: 900; color: #fff; margin-bottom: 40px; display: flex; align-items: center; gap: 12px; }
+    .brand i { color: var(--sw-cyan); font-size: 28px; }
+
+    .nav-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 2px; margin: 0 0 12px 12px; }
+    .nav-item { padding: 14px 16px; border-radius: 12px; color: var(--text-muted); font-weight: 500; font-size: 14px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 12px; margin-bottom: 8px; border: 1px solid transparent; }
+    .nav-item:hover { background: rgba(255,255,255,0.03); color: #fff; }
+    .nav-item.active { background: rgba(0, 229, 255, 0.08); color: var(--sw-cyan); border-color: rgba(0, 229, 255, 0.2); font-weight: 700; }
+    .nav-item i { font-size: 18px; }
+
+    .main-view { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+    
+    .header { background: transparent; padding: 25px 40px; display: flex; justify-content: flex-end; align-items: center; }
+    .user-badge { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 30px; padding: 8px 20px 8px 8px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: var(--transition); backdrop-filter: blur(10px); }
+    .user-badge:hover { background: rgba(255,255,255,0.08); border-color: var(--sw-cyan); }
+    .user-avatar { width: 32px; height: 32px; background: var(--sw-cyan); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; }
+    .user-name { font-size: 14px; font-weight: 700; }
+
+    .content { padding: 0 40px 40px; max-width: 1200px; margin: 0 auto; width: 100%; }
+    
+    .hero {
+      background: linear-gradient(to right, rgba(10,2,18,0.9) 0%, rgba(10,2,18,0.2) 100%), url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2400&auto=format&fit=crop') center/cover;
+      height: 380px; border-radius: 24px; margin-bottom: 40px; display: flex; align-items: center; padding: 50px; border: 1px solid var(--glass-border); box-shadow: 0 30px 60px rgba(0,0,0,0.5); position: relative; overflow: hidden;
+    }
+    .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(45deg, rgba(0, 229, 255, 0.1), transparent); pointer-events: none; }
+    .hero-content { position: relative; z-index: 2; max-width: 600px; }
+    .hero-tag { color: var(--sw-cyan); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; display: block; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .hero-tag i { font-size: 16px; }
+    .hero h1 { font-size: 52px; font-weight: 900; margin-bottom: 16px; line-height: 1.1; letter-spacing: -1px; }
+    .hero p { font-size: 16px; color: var(--text-muted); margin-bottom: 30px; line-height: 1.6; }
+    
+    .play-btn { background: var(--sw-cyan); color: #000; padding: 16px 36px; border-radius: 14px; font-size: 14px; font-weight: 900; border: none; cursor: pointer; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; transition: var(--transition); }
+    .play-btn:hover { background: #fff; transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0, 229, 255, 0.3); }
+
+    /* MODALS & GAME UI (z-index higher than maintenanceScreen) */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(2, 0, 5, 0.95); backdrop-filter: blur(25px); z-index: 200000; flex-direction: column; align-items: center; justify-content: center; }
+    .modal.active { display: flex; }
+    .modal-box { background: var(--bg-panel); border: 1px solid var(--glass-border); border-radius: 24px; width: 650px; max-width: 90%; padding: 40px; position: relative; box-shadow: 0 30px 80px rgba(0,0,0,0.8); max-height: 85vh; overflow-y: auto; }
+    .close-btn { position: absolute; top: 24px; right: 24px; background: rgba(255,255,255,0.05); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); z-index: 50; }
+    .close-btn:hover { background: var(--sw-pink); transform: rotate(90deg); }
+
+    /* LEADERBOARD & ADMIN TABLES */
+    .lb-table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+    .lb-table th { text-align: left; font-size: 10px; text-transform: uppercase; color: var(--text-muted); padding: 16px 12px; border-bottom: 1px solid var(--glass-border); letter-spacing: 2px; }
+    .lb-table td { padding: 16px 12px; font-size: 15px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.02); }
+    .rank-badge { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; background: rgba(255,255,255,0.05); color: #fff; }
+    .rank-1 { background: #00e5ff; color: #000; box-shadow: 0 0 15px rgba(0,229,255,0.4); }
+    .rank-2 { background: #b08dff; color: #000; }
+    .rank-3 { background: #ff0055; color: #fff; }
+
+    .action-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: var(--transition); margin-right: 4px; }
+    .action-btn:hover { background: var(--sw-cyan); color: #000; border-color: var(--sw-cyan); }
+    .action-btn.danger:hover { background: var(--sw-pink); color: #fff; border-color: var(--sw-pink); }
+
+    /* GAME CANVAS WINDOW */
+    #gameModal .modal-box { width: 1200px; max-width: 98%; padding: 0; background: #000; border: 1px solid var(--glass-border); overflow: hidden; border-radius: 20px; box-shadow: 0 0 100px rgba(0,0,0,0.8); }
+    #gameCanvas { width: 100%; height: 600px; background: #000; display: block; }
+    
+    /* CLEAN IN-GAME HUD */
+    #spacewavesHud { position: absolute; top: 24px; left: 30px; right: 30px; z-index: 5; display: none; justify-content: space-between; align-items: flex-start; pointer-events: none; }
+    
+    .hud-left { display: flex; flex-direction: column; gap: 8px; }
+    .sw-score-display { background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 24px; font-size: 24px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 10px; }
+    .sw-score-display span { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; }
+    
+    /* PROGRESS BAR */
+    .progress-container { background: rgba(0,0,0,0.6); border: 1px solid var(--glass-border); border-radius: 10px; padding: 10px; width: 300px; backdrop-filter: blur(10px); }
+    .progress-header { display: flex; justify-content: space-between; font-size: 10px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 1px; }
+    .progress-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: var(--sw-cyan); transition: width 0.1s linear; border-radius: 4px; box-shadow: 0 0 10px var(--sw-cyan); }
+
+    /* GAME START MENU (LEVEL SELECT & INFO) */
+    #spacewavesMenu { position: absolute; inset: 0; background: rgba(2, 0, 5, 0.9); backdrop-filter: blur(15px); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+    .sw-title { color: #fff; font-size: 40px; font-weight: 900; letter-spacing: 2px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; }
+    
+    .level-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; width: 100%; max-width: 900px; margin-bottom: 20px; }
+    .level-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; text-align: left; cursor: pointer; transition: var(--transition); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
+    .level-btn::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); transform: scaleY(0); transition: var(--transition); }
+    .level-btn:hover { background: rgba(255,255,255,0.06); border-color: var(--accent); transform: translateY(-2px); }
+    .level-btn:hover::before { transform: scaleY(1); }
+    .level-btn h3 { font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between; }
+    .level-btn p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+    .level-btn .meta { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 1px; margin-top: auto; padding-top: 8px; }
+
+    /* INSTRUCTIONS & INCLUDED/NOT PANEL */
+    .info-panel { width: 100%; max-width: 900px; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .info-title { font-size: 12px; font-weight: 900; text-transform: uppercase; color: var(--sw-cyan); letter-spacing: 2px; display: flex; align-items: center; gap: 8px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 13px; color: var(--text-muted); }
+    .info-box { background: rgba(0,0,0,0.3); border-radius: 10px; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.03); }
+    .info-box b { color: #fff; display: block; margin-bottom: 6px; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+
+    /* OVERLAYS */
+    .overlay-msg { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: rgba(2,0,5,0.9); z-index: 20; backdrop-filter: blur(10px); }
+    .overlay-msg h2 { font-size: 64px; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+    .overlay-msg p { font-size: 20px; color: #fff; font-weight: 500; margin-bottom: 30px; }
+    .overlay-msg .sub { font-size: 14px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+
+    /* MAINTENANCE OVERLAY SCREEN */
+    #maintenanceScreen {
+      position: fixed; inset: 0; z-index: 99999;
+      background: rgba(2, 0, 5, 0.98); backdrop-filter: blur(30px);
+      display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px;
+    }
+    #maintenanceScreen.active { display: flex; }
+    #maintenanceScreen i { font-size: 64px; color: var(--sw-gold); margin-bottom: 20px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0.6; } }
+
   </style>
 </head>
 <body>
 
-  <div class="space-bg"></div>
+  <!-- HYPERSPACE BACKGROUND -->
+  <canvas id="bgCanvas"></canvas>
 
-  <!-- AUTHENTICATION VIEW -->
-  <div id="auth-view" class="view active">
-    <div class="login-container">
-      <h2>Space Waves</h2>
-      <div id="maintenance-notice" class="broadcast-box" style="display:none; background:rgba(255,0,0,0.1); border-color:#ff4d4d; color:#ff4d4d;">System is currently under maintenance. Only Admins can log in.</div>
-      <div class="input-group">
-        <input type="text" id="username" placeholder="Username" required autocomplete="username">
-      </div>
-      <div class="input-group">
-        <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
-      </div>
-      <button id="login-btn">Initialize Launch (Log In)</button>
-      <button id="signup-btn" class="secondary">Create Account</button>
-      <div id="auth-error" style="color: #ff4d4d; margin-top: 15px; font-size: 14px; font-weight: bold;"></div>
+  <!-- MAINTENANCE SCREEN OVERLAY -->
+  <div id="maintenanceScreen">
+    <i class="ph-fill ph-wrench"></i>
+    <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 10px; color: #fff;">SYSTEM UNDER MAINTENANCE</h1>
+    <p style="color: var(--text-muted); max-width: 450px; font-size: 15px; line-height: 1.6; margin-bottom: 25px;">The Spacewaves server network is currently undergoing scheduled maintenance or administrative updates. Please check back shortly.</p>
+    <div style="display: flex; flex-direction: column; gap: 12px; width: 220px;">
+      <button class="gate-btn" onclick="location.reload()" style="width: 100%; padding: 12px;">Retry Connection</button>
+      <button class="gate-btn" onclick="openModal('adminAuthModal')" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.08); color: var(--sw-cyan); border: 1px solid var(--glass-border);">Admin Override</button>
     </div>
   </div>
 
-  <!-- DASHBOARD VIEW -->
-  <div id="dashboard-view" class="view">
-    <div class="glass-panel" style="max-width: 500px;">
-      <h3>Transmission Array</h3>
-      <div id="global-announcement" class="broadcast-box" style="display: none;"></div>
-      
-      <p style="margin-bottom: 15px; font-size: 18px;">Pilot: <strong id="user-display-name" style="color:#00d2ff;"></strong></p>
-      <p style="margin-bottom: 25px; font-size: 18px;">Distance Record: <strong id="user-score" style="color:#00d2ff;"></strong>m</p>
-
-      <button id="play-btn">Launch Wave Flight</button>
-      <button id="admin-btn" class="admin-btn-theme" style="display: none;">Open Admin Panel</button>
-      <button id="logout-btn" class="secondary">Disconnect (Logout)</button>
+  <!-- SECURE AUTHENTICATION GATE -->
+  <div id="authGate">
+    <div class="gate-box">
+      <div class="gate-logo"><i class="ph-fill ph-intersect"></i> SPACEWAVES</div>
+      <div class="gate-subtitle">Secure High-Score Network</div>
+      <div id="banAlertBox" style="display:none; background: rgba(255,0,85,0.15); border: 1px solid var(--sw-pink); color: #fff; padding: 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; text-align: left; line-height: 1.4;"></div>
+      <form class="auth-form" onsubmit="handleAccountGate(event)">
+        <div class="input-group">
+          <label>GamerTag</label>
+          <div class="input-wrapper">
+            <input type="text" id="gateUsername" placeholder="Enter username..." required minlength="3" maxlength="16" autocomplete="off">
+            <i class="ph-fill ph-user"></i>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Secure Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="gatePassword" placeholder="Enter password..." required minlength="4">
+            <i class="ph-fill ph-lock-key"></i>
+          </div>
+        </div>
+        <button type="submit" class="gate-btn">Authorize & Connect</button>
+        <button type="button" class="gate-btn" onclick="openModal('adminAuthModal')" style="background: rgba(255,255,255,0.05); color: var(--sw-cyan); font-size: 11px; padding: 12px; margin-top: 5px; border: 1px solid var(--glass-border);">Admin Override Access</button>
+        <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 5px;">If the account does not exist, it will be registered automatically.</p>
+      </form>
     </div>
   </div>
 
-  <!-- ADMIN PANEL VIEW -->
-  <div id="admin-view" class="view">
-    <div class="glass-panel">
-      <h3 style="color: #9b59b6;">Command Center (Admin)</h3>
+  <!-- ADMIN AUTH MODAL -->
+  <div class="modal" id="adminAuthModal">
+    <div class="modal-box" style="width: 420px;">
+      <button class="close-btn" onclick="closeModal('adminAuthModal')"><i class="ph ph-x"></i></button>
+      <h3 style="color:#fff; font-size:20px; font-weight:900; margin-bottom:24px; display:flex; align-items:center; gap:10px;">
+        <i class="ph-fill ph-shield-check" style="color:var(--sw-pink)"></i> Admin Override
+      </h3>
+      <form class="auth-form" onsubmit="handleAdminAuth(event)">
+        <div class="input-group">
+          <label>Admin Passphrase</label>
+          <div class="input-wrapper">
+            <input type="password" id="adminPassInput" placeholder="Passphrase..." required autocomplete="off">
+            <i class="ph-fill ph-key"></i>
+          </div>
+        </div>
+        <button type="submit" class="gate-btn" style="background:var(--sw-pink); color:#fff;">Access Command Panel</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN COMMAND PANEL MODAL -->
+  <div class="modal" id="adminPanelModal">
+    <div class="modal-box" style="width: 800px;">
+      <button class="close-btn" onclick="closeModal('adminPanelModal')"><i class="ph ph-x"></i></button>
+      <h3 style="color:#fff; font-size:22px; font-weight:900; margin-bottom:6px; display:flex; align-items:center; gap:10px;">
+        <i class="ph-fill ph-terminal-window" style="color: var(--sw-cyan)"></i> Admin Command Center
+      </h3>
+      <p style="color:var(--text-muted); font-size:13px; margin-bottom: 24px;">Manage system maintenance, user accounts, edit/delete scores, and ban cheaters.</p>
       
-      <div class="admin-grid">
-        <div class="admin-card">
-          <h4 style="color:#9b59b6; margin-bottom:10px; font-size:14px;">Global Broadcast</h4>
-          <input type="text" id="broadcast-input" placeholder="Enter announcement..." style="width:100%; padding:8px; margin-bottom:8px; background:rgba(0,0,0,0.4); border:1px solid rgba(155,89,182,0.3); border-radius:6px; color:#fff;">
-          <button id="broadcast-btn" class="admin-btn-theme" style="margin-bottom:0; padding:8px;">Broadcast Message</button>
+      <!-- Maintenance Mode Box -->
+      <div style="background: rgba(255,0,85,0.08); border: 1px solid var(--sw-pink); padding: 18px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <div>
+          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom: 4px;">Global Maintenance Mode</div>
+          <div style="font-size:12px; color:var(--text-muted);">When active, non-admin login is locked and maintenance screen is shown.</div>
         </div>
-        <div class="admin-card">
-          <h4 style="color:#9b59b6; margin-bottom:10px; font-size:14px;">System Controls</h4>
-          <button id="maintenance-toggle-btn" class="secondary" style="margin-bottom:8px; padding:8px;">Toggle Maintenance Mode</button>
-          <button id="system-reboot-btn" class="danger" style="margin-bottom:0; padding:8px;">Trigger System Reboot</button>
-        </div>
+        <input type="checkbox" id="maintToggle" onchange="toggleMaintenanceMode(this)" style="width:24px; height:24px; accent-color: var(--sw-pink); cursor:pointer;">
       </div>
 
-      <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-        <h4 style="color: #00d2ff; font-size: 15px;">Pilot Database Management</h4>
-        <span style="font-size: 12px; color: #aaa;">Syncs Live Across All Devices</span>
-      </div>
-
-      <div style="max-height: 250px; overflow-y: auto;">
-        <table id="users-table">
+      <!-- User & Score Management Table -->
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--sw-cyan); letter-spacing: 2px; margin-bottom: 12px;">Registered Users & High Scores Management</div>
+      <div style="max-height: 350px; overflow-y: auto; border: 1px solid var(--glass-border); border-radius: 12px;">
+        <table class="lb-table" style="margin-top: 0;">
           <thead>
             <tr>
-              <th>Username</th>
-              <th>Distance</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th style="padding: 12px;">GamerTag</th>
+              <th style="padding: 12px;">High Score</th>
+              <th style="padding: 12px;">Status</th>
+              <th style="padding: 12px; text-align: right;">Admin Actions</th>
             </tr>
           </thead>
-          <tbody id="users-tbody"></tbody>
+          <tbody id="adminUserTableBody"></tbody>
         </table>
       </div>
-      <button id="admin-back-btn" class="secondary" style="margin-top: 20px;">Back to Dashboard</button>
     </div>
   </div>
 
-  <!-- GAME VIEW -->
-  <div id="game-view" class="view">
-    <div id="hud">
-      <div>DISTANCE: <span id="score-display">0</span>m</div>
-    </div>
-    <canvas id="gameCanvas"></canvas>
-    <button id="quit-btn" class="danger">Abort Mission</button>
+  <!-- MAIN DASHBOARD -->
+  <div id="appLayout">
+    <nav class="sidebar">
+      <div class="brand"><i class="ph-fill ph-intersect"></i> SPACEWAVES</div>
+      <div class="nav-label">Main Menu</div>
+      <div class="nav-item active"><i class="ph-fill ph-game-controller"></i> Play Hub</div>
+      <div class="nav-item" onclick="openLeaderboard()"><i class="ph-fill ph-crown"></i> Global Rankings</div>
+      
+      <div class="nav-label" style="margin-top: auto;">System</div>
+      <div class="nav-item" onclick="openModal('adminAuthModal')"><i class="ph-fill ph-shield"></i> Admin Access</div>
+      <div class="nav-item" onclick="logoutAccount()"><i class="ph-fill ph-sign-out"></i> Switch Account</div>
+    </nav>
+
+    <main class="main-view">
+      <header class="header">
+        <div class="user-badge">
+          <div class="user-avatar" id="headerAvatar">U</div>
+          <div class="user-name" id="headerUsername">Player</div>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="hero">
+          <div class="hero-content">
+            <span class="hero-tag"><i class="ph-fill ph-lightning"></i> Master Update Live</span>
+            <h1>SELECT LEVEL.<br>MASTER THE WAVE.</h1>
+            <p>Level 1 features safe block-riding mechanics. Levels 2, 3, and Endless enforce strict vertical evasion where all structures are lethal. Check the rules per sector before launching.</p>
+            <div class="btn-group">
+              <button class="play-btn" onclick="launchGame()"><i class="ph-fill ph-play"></i> Open Level Hub</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 
-  <!-- MAIN SCRIPT -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, get, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  <!-- LEADERBOARD MODAL -->
+  <div class="modal" id="leaderboardModal">
+    <div class="modal-box">
+      <button class="close-btn" onclick="closeModal('leaderboardModal')"><i class="ph ph-x"></i></button>
+      <h3 style="color:#fff; font-size:24px; font-weight:900; display:flex; align-items:center; gap:12px;">
+        <i class="ph-fill ph-crown" style="color:var(--sw-gold)"></i> Top Pilots (Endless Mode)
+      </h3>
+      <table class="lb-table">
+        <thead><tr><th>Rank</th><th>GamerTag</th><th>Distance</th></tr></thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </div>
+  </div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDZt9nls66xzPoWRsykXYE-mzeyyOrl4gg",
-      authDomain: "spacewave-101e8.firebaseapp.com",
-      projectId: "spacewave-101e8",
-      storageBucket: "spacewave-101e8.firebasestorage.app",
-      messagingSenderId: "457788800101",
-      appId: "1:457788800101:web:ec6b22ad8dc2480dfb1a8c",
-      measurementId: "G-BQRZ1XB5Z3",
-      databaseURL: "https://spacewave-101e8-default-rtdb.firebaseio.com"
-    };
+  <!-- GAME MODAL -->
+  <div class="modal" id="gameModal">
+    <div class="modal-box">
+      <button class="close-btn" id="gameCloseBtn" onclick="closeModal('gameModal')"><i class="ph ph-x"></i></button>
+      
+      <!-- IN-GAME HUD -->
+      <div id="spacewavesHud">
+        <div class="hud-left">
+          <div class="sw-score-display">
+            <span>DIST</span>
+            <div id="swProgressText" style="color: var(--theme-color);">0m</div>
+          </div>
+          <div class="progress-container" id="swProgressBarContainer">
+            <div class="progress-header">
+              <span id="swLevelName">Sector Alpha</span>
+              <span id="swPercent">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="swProgressFill" style="background: var(--theme-color); box-shadow: 0 0 10px var(--theme-color);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
+      <!-- OVERLAYS -->
+      <div id="crashOverlay" class="overlay-msg">
+        <h2 style="color: var(--sw-pink); text-shadow: 0 0 30px rgba(255,0,85,0.6);">CRASHED</h2>
+        <p id="crashDist">Distance: 0m</p>
+        <div class="sub">Press SPACE to Restart • ESC to Menu</div>
+      </div>
 
-    let currentUserId = localStorage.getItem('spacewave_uid') || null;
-    let userData = null;
-    let isMaintenanceActive = false;
+      <div id="winOverlay" class="overlay-msg">
+        <h2 style="color: var(--sw-cyan); text-shadow: 0 0 30px rgba(0,229,255,0.6);">LEVEL CLEAR</h2>
+        <p>Sector Conquered Successfully.</p>
+        <div class="sub">Press SPACE or ESC to Menu</div>
+      </div>
 
-    // Live global listeners to sync state across all devices instantly
-    onValue(ref(database, 'global/maintenance'), (snapshot) => {
-      isMaintenanceActive = snapshot.val() || false;
-      const notice = document.getElementById('maintenance-notice');
-      if (notice) {
-        notice.style.display = isMaintenanceActive ? 'block' : 'none';
+      <!-- START MENU OVERLAY -->
+      <div id="spacewavesMenu">
+        <div class="sw-title"><i class="ph-fill ph-intersect" style="color: var(--sw-cyan)"></i> SELECT SECTOR</div>
+        <div class="level-grid">
+          <div class="level-btn" style="--accent: var(--sw-cyan);" onclick="startSpacewavesLevel(1)">
+            <h3>Level 1 (Sector Alpha) <i class="ph-fill ph-play-circle"></i></h3>
+            <p>Standard velocity. Introduction to vertical movement.</p>
+            <div class="meta">Target: 3,000m • Block Riding: ENABLED</div>
+          </div>
+          <div class="level-btn" style="--accent: var(--sw-purple);" onclick="startSpacewavesLevel(2)">
+            <h3>Level 2 (Nebula Drift) <i class="ph-fill ph-play-circle"></i></h3>
+            <p>Faster pace. Navigating floating architecture.</p>
+            <div class="meta">Target: 5,000m • Block Riding: DISABLED</div>
+          </div>
+          <div class="level-btn" style="--accent: var(--sw-pink);" onclick="startSpacewavesLevel(3)">
+            <h3>Level 3 (Void Runner) <i class="ph-fill ph-play-circle"></i></h3>
+            <p>High velocity gauntlet. Precision required.</p>
+            <div class="meta">Target: 8,000m • Block Riding: DISABLED</div>
+          </div>
+          <div class="level-btn" style="--accent: var(--sw-gold);" onclick="startSpacewavesLevel('endless')">
+            <h3>Endless (Infinity Grid) <i class="ph-fill ph-infinity"></i></h3>
+            <p>Procedurally scaling difficulty. Global rankings.</p>
+            <div class="meta">Target: Survive • Block Riding: DISABLED</div>
+          </div>
+        </div>
+
+        <!-- INSTRUCTIONS & WHAT IS INCLUDED/NOT -->
+        <div class="info-panel">
+          <div class="info-title"><i class="ph-fill ph-info"></i> How to Play & Sector Mechanics Guide</div>
+          <div class="info-grid">
+            <div class="info-box">
+              <b>Controls & Instructions</b>
+              Hold <b>SPACEBAR</b>, <b>UP ARROW</b>, or click/tap the screen to fly upward. Release to glide downward diagonally. Avoid all deadly obstacles and reach the distance target. Press <b>ESC</b> anytime to return to this menu.
+            </div>
+            <div class="info-box">
+              <b>What's Included & Not Included</b>
+              • <b>Level 1:</b> Block-riding is <i>included</i> (safe to land on top flat block surfaces).<br>
+              • <b>Levels 2, 3 & Endless:</b> Block-riding is <i>not included</i> (all blocks and spikes are lethal).<br>
+              • <i>Included:</i> Precise hitboxes, campaign progression, and global rankings.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <canvas id="gameCanvas" width="1200" height="600"></canvas>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+       1. SECURE AUTHENTICATION, BANS & MAINTENANCE SYSTEM
+       ========================================================= */
+    let currentUser = localStorage.getItem('spacewaves_active_session');
+    let isAdminSession = localStorage.getItem('spacewaves_admin_session') === 'true';
+
+    function checkMaintenanceStatus() {
+      const isMaint = localStorage.getItem('spacewaves_maintenance') === 'true';
+      if (isMaint && !isAdminSession) {
+        document.getElementById('maintenanceScreen').classList.add('active');
+      } else {
+        document.getElementById('maintenanceScreen').classList.remove('active');
       }
-    });
+    }
+    checkMaintenanceStatus();
 
-    onValue(ref(database, 'global/announcement'), (snapshot) => {
-      const msg = snapshot.val();
-      const box = document.getElementById('global-announcement');
-      if (box) {
-        if (msg) { box.innerText = "ADMIN BROADCAST: " + msg; box.style.display = 'block'; }
-        else { box.style.display = 'none'; }
+    // Robust case-insensitive ban lookup
+    function getActiveBanReason(username) {
+      if (!username) return null;
+      let bans = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+      for (let bUser in bans) {
+        if (bUser.toLowerCase() === username.toLowerCase()) {
+          return bans[bUser];
+        }
       }
-    });
-
-    onValue(ref(database, 'global/rebootSignal'), () => {
-      if (localStorage.getItem('spacewave_uid')) {
-        alert("CRITICAL: Administrative system reboot initiated. Re-authenticating session.");
-        logoutUser();
-      }
-    });
-
-    function showView(viewId) {
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.getElementById(viewId).classList.add('active');
+      return null;
     }
 
-    async function checkSession() {
-      if (currentUserId) {
-        const snap = await get(ref(database, `users/${currentUserId}`));
-        if (snap.exists()) {
-          userData = snap.val();
-          if (userData.isBanned) {
-            alert(`SECURITY ALERT: Pilot license revoked. Reason: ${userData.banReason || 'Violation of protocols'}`);
-            logoutUser();
-            return;
-          }
-          if (isMaintenanceActive && userData.role !== 'admin') {
-            alert("System is currently locked under maintenance mode.");
-            logoutUser();
-            return;
-          }
-          setupDashboard();
-          showView('dashboard-view');
+    function checkAuth() {
+      checkMaintenanceStatus();
+      if (!currentUser) { 
+        document.getElementById('authGate').classList.remove('hidden'); 
+      } else {
+        let banReason = getActiveBanReason(currentUser);
+        if (banReason) {
+          localStorage.removeItem('spacewaves_active_session');
+          currentUser = null;
+          document.getElementById('authGate').classList.remove('hidden');
+          const alertBox = document.getElementById('banAlertBox');
+          alertBox.style.display = 'block';
+          alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> Your account has been banned.<br><b>Reason:</b> ${banReason}`;
           return;
         }
+
+        document.getElementById('authGate').classList.add('hidden');
+        document.getElementById('headerUsername').innerText = currentUser;
+        document.getElementById('headerAvatar').innerText = currentUser.charAt(0).toUpperCase();
       }
-      showView('auth-view');
     }
 
-    function logoutUser() {
-      localStorage.removeItem('spacewave_uid');
-      currentUserId = null;
-      userData = null;
-      showView('auth-view');
-    }
-
-    document.getElementById('login-btn').addEventListener('click', async () => {
-      const u = document.getElementById('username').value.trim();
-      const p = document.getElementById('password').value;
-      const errBox = document.getElementById('auth-error');
-      errBox.innerText = "";
-
-      if (!u || !p) { errBox.innerText = "Enter username and password."; return; }
-
-      const usersSnap = await get(ref(database, 'users'));
-      let foundUserKey = null;
-      let foundUserData = null;
-
-      usersSnap.forEach(child => {
-        const val = child.val();
-        if (val.username && val.username.toLowerCase() === u.toLowerCase()) {
-          foundUserKey = child.key;
-          foundUserData = val;
+    // Real-time active session ban monitor (kicks out immediately if banned while logged in)
+    setInterval(() => {
+      if (currentUser) {
+        let banReason = getActiveBanReason(currentUser);
+        if (banReason) {
+          localStorage.removeItem('spacewaves_active_session');
+          currentUser = null;
+          document.getElementById('authGate').classList.remove('hidden');
+          const alertBox = document.getElementById('banAlertBox');
+          alertBox.style.display = 'block';
+          alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> Your account has been banned.<br><b>Reason:</b> ${banReason}`;
         }
-      });
+      }
+    }, 1000);
 
-      if (!foundUserKey) { errBox.innerText = "Pilot not found. Create an account."; return; }
-      if (foundUserData.password !== p) { errBox.innerText = "Incorrect password."; return; }
-      if (foundUserData.isBanned) { errBox.innerText = `Account banned: ${foundUserData.banReason || 'No reason provided'}`; return; }
+    function handleAccountGate(e) {
+      e.preventDefault();
+      const user = document.getElementById('gateUsername').value.trim();
+      const pass = document.getElementById('gatePassword').value.trim();
       
-      if (isMaintenanceActive && foundUserData.role !== 'admin') {
-        errBox.innerText = "Maintenance mode active. Only admins may access.";
+      // Check if user is banned
+      let banReason = getActiveBanReason(user);
+      if (banReason) {
+        const alertBox = document.getElementById('banAlertBox');
+        alertBox.style.display = 'block';
+        alertBox.innerHTML = `<b>ACCESS TERMINATED:</b> This account is banned.<br><b>Reason:</b> ${banReason}`;
         return;
       }
 
-      currentUserId = foundUserKey;
-      userData = foundUserData;
-      localStorage.setItem('spacewave_uid', currentUserId);
-      setupDashboard();
-      showView('dashboard-view');
-    });
+      let usersDB = JSON.parse(localStorage.getItem('spacewaves_accounts')) || {};
+      
+      // Case-insensitive user key search
+      let matchedKey = Object.keys(usersDB).find(k => k.toLowerCase() === user.toLowerCase());
 
-    document.getElementById('signup-btn').addEventListener('click', async () => {
-      if (isMaintenanceActive) {
-        alert("Registrations disabled during maintenance.");
-        return;
+      if (matchedKey) {
+        if (usersDB[matchedKey] !== pass) { alert('ACCESS DENIED: Incorrect password.'); return; }
+        currentUser = matchedKey;
+      } else {
+        usersDB[user] = pass;
+        localStorage.setItem('spacewaves_accounts', JSON.stringify(usersDB));
+        currentUser = user;
       }
-      const u = document.getElementById('username').value.trim();
-      const p = document.getElementById('password').value;
-      const errBox = document.getElementById('auth-error');
-      errBox.innerText = "";
-
-      if (!u || !p) { errBox.innerText = "Enter username and password."; return; }
-      if (u.length < 3) { errBox.innerText = "Username must be at least 3 characters."; return; }
-
-      const usersSnap = await get(ref(database, 'users'));
-      let taken = false;
-      usersSnap.forEach(child => {
-        if (child.val().username && child.val().username.toLowerCase() === u.toLowerCase()) taken = true;
-      });
-
-      if (taken) { errBox.innerText = "Username already taken."; return; }
-
-      const newUserId = 'user_' + Date.now() + Math.random().toString(36).substring(2, 7);
-      const newUser = { username: u, password: p, score: 0, role: 'player', isBanned: false, banReason: '' };
-
-      await set(ref(database, `users/${newUserId}`), newUser);
-      currentUserId = newUserId;
-      userData = newUser;
-      localStorage.setItem('spacewave_uid', currentUserId);
-      setupDashboard();
-      showView('dashboard-view');
-    });
-
-    document.getElementById('logout-btn').addEventListener('click', logoutUser);
-
-    function setupDashboard() {
-      document.getElementById('user-display-name').innerText = userData?.username || "Unknown Pilot";
-      document.getElementById('user-score').innerText = userData?.score || 0;
-      document.getElementById('admin-btn').style.display = (userData?.role === 'admin') ? 'block' : 'none';
+      
+      localStorage.setItem('spacewaves_active_session', currentUser);
+      document.getElementById('gatePassword').value = ''; 
+      document.getElementById('banAlertBox').style.display = 'none';
+      checkAuth();
     }
 
-    // --- ADMIN PANEL LOGIC ---
-    document.getElementById('admin-btn').addEventListener('click', () => {
-      showView('admin-view');
-      onValue(ref(database, 'users'), (snapshot) => {
-        const tbody = document.getElementById('users-tbody');
-        tbody.innerHTML = '';
-        snapshot.forEach(child => {
-          const uid = child.key; const data = child.val();
-          tbody.innerHTML += `
-            <tr>
-              <td>${data.username || 'Unknown'}</td>
-              <td>${data.score || 0}m <button onclick="window.editScore('${uid}', ${data.score})" style="padding:2px 5px; font-size:10px; width:auto; margin-left:5px;">Edit</button></td>
-              <td>${data.role}</td>
-              <td style="color:${data.isBanned ? '#ff4d4d' : '#00d2ff'}">${data.isBanned ? 'BANNED' : 'ACTIVE'}</td>
-              <td>
-                <button class="${data.isBanned ? '' : 'danger'}" onclick="window.toggleBan('${uid}', ${data.isBanned})" style="padding: 4px 8px; font-size:11px; width: auto; margin-bottom:2px;">${data.isBanned ? 'Unban' : 'Ban'}</button>
-                <button onclick="window.deleteUser('${uid}')" class="danger" style="padding: 4px 8px; font-size:11px; width: auto; margin-bottom:2px;">Delete</button>
-                ${data.role !== 'admin' ? `<button onclick="window.makeAdmin('${uid}')" class="admin-btn-theme" style="padding: 4px 8px; font-size:11px; width: auto; margin-bottom:0;">Promote</button>` : ''}
-              </td>
-            </tr>`;
-        });
+    function logoutAccount() { 
+      localStorage.removeItem('spacewaves_active_session'); 
+      localStorage.removeItem('spacewaves_admin_session');
+      isAdminSession = false;
+      currentUser = null; 
+      checkAuth(); 
+    }
+    checkAuth();
+
+    function handleAdminAuth(e) {
+      e.preventDefault();
+      const pass = document.getElementById('adminPassInput').value;
+      if (pass === 'Cookie') { 
+        isAdminSession = true;
+        localStorage.setItem('spacewaves_admin_session', 'true');
+        closeModal('adminAuthModal'); 
+        document.getElementById('adminPassInput').value = ''; 
+        openAdminPanel();
+        checkMaintenanceStatus();
+      } else { 
+        alert('Unauthorized Passphrase!'); 
+      }
+    }
+
+    function toggleMaintenanceMode(checkbox) {
+      localStorage.setItem('spacewaves_maintenance', checkbox.checked ? 'true' : 'false');
+      checkMaintenanceStatus();
+    }
+
+    function openAdminPanel() {
+      openModal('adminPanelModal');
+      const isMaint = localStorage.getItem('spacewaves_maintenance') === 'true';
+      document.getElementById('maintToggle').checked = isMaint;
+      renderAdminUserTable();
+    }
+
+    function renderAdminUserTable() {
+      const tbody = document.getElementById('adminUserTableBody');
+      const usersDB = JSON.parse(localStorage.getItem('spacewaves_accounts')) || {};
+      const scoresDB = JSON.parse(localStorage.getItem('spacewaves_highscores')) || {};
+
+      const usernames = Object.keys(usersDB);
+      if (usernames.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">No registered accounts found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      usernames.forEach(username => {
+        let score = scoresDB[username] !== undefined ? scoresDB[username] + 'm' : 'No Score';
+        let banReason = getActiveBanReason(username);
+        let isBanned = !!banReason;
+        let statusBadge = isBanned ? `<span style="color:var(--sw-pink); font-size:11px; font-weight:900;" title="${banReason}">BANNED</span>` : `<span style="color:var(--sw-cyan); font-size:11px; font-weight:700;">ACTIVE</span>`;
+        
+        tbody.innerHTML += `
+          <tr>
+            <td style="color:#fff; font-weight:700;">${username}</td>
+            <td style="color:var(--sw-gold); font-weight:900; font-variant-numeric: tabular-nums;">${score}</td>
+            <td>${statusBadge}</td>
+            <td style="text-align: right;">
+              <button class="action-btn" onclick="adminEditScore('${username}')">Edit Score</button>
+              <button class="action-btn danger" onclick="adminDeleteScore('${username}')">Del Score</button>
+              ${isBanned ? 
+                `<button class="action-btn" onclick="adminUnbanUser('${username}')">Unban</button>` : 
+                `<button class="action-btn danger" onclick="adminBanUser('${username}')">Ban</button>`
+              }
+            </td>
+          </tr>
+        `;
       });
-    });
+    }
 
-    document.getElementById('broadcast-btn').addEventListener('click', () => {
-      const msg = document.getElementById('broadcast-input').value;
-      set(ref(database, 'global/announcement'), msg);
-      document.getElementById('broadcast-input').value = '';
-    });
-
-    document.getElementById('maintenance-toggle-btn').addEventListener('click', () => {
-      const newState = !isMaintenanceActive;
-      set(ref(database, 'global/maintenance'), newState);
-      alert(`Maintenance mode is now ${newState ? 'ENABLED' : 'DISABLED'}`);
-    });
-
-    document.getElementById('system-reboot-btn').addEventListener('click', () => {
-      if (confirm("Are you sure you want to broadcast a global system reboot?")) {
-        set(ref(database, 'global/rebootSignal'), Date.now());
+    function adminEditScore(username) {
+      let scoresDB = JSON.parse(localStorage.getItem('spacewaves_highscores')) || {};
+      let currentScore = scoresDB[username] || 0;
+      let newScoreInput = prompt(`Edit High Score for user '${username}':`, currentScore);
+      if (newScoreInput !== null) {
+        let parsed = parseInt(newScoreInput, 10);
+        if (!isNaN(parsed) && parsed >= 0) {
+          scoresDB[username] = parsed;
+          localStorage.setItem('spacewaves_highscores', JSON.stringify(scoresDB));
+          renderAdminUserTable();
+        } else {
+          alert('Invalid score value entered.');
+        }
       }
-    });
+    }
 
-    document.getElementById('admin-back-btn').addEventListener('click', () => showView('dashboard-view'));
+    function adminDeleteScore(username) {
+      if (confirm(`Are you sure you want to delete the high score for '${username}'?`)) {
+        let scoresDB = JSON.parse(localStorage.getItem('spacewaves_highscores')) || {};
+        delete scoresDB[username];
+        localStorage.setItem('spacewaves_highscores', JSON.stringify(scoresDB));
+        renderAdminUserTable();
+      }
+    }
 
-    window.toggleBan = (uid, current) => {
-      if (!current) {
-        const reason = prompt("Enter custom ban reason for this pilot:", "Cheating / Exploiting");
-        if (reason === null) return;
-        update(ref(database, `users/${uid}`), { isBanned: true, banReason: reason });
-      } else {
-        update(ref(database, `users/${uid}`), { isBanned: false, banReason: '' });
+    function adminBanUser(username) {
+      let reason = prompt(`Enter ban reason for user '${username}':`, 'Violation of fair play / Cheating detected');
+      if (reason !== null) {
+        let bansDB = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+        bansDB[username] = reason.trim() || 'Administrative ban';
+        localStorage.setItem('spacewaves_bans', JSON.stringify(bansDB));
+        renderAdminUserTable();
+      }
+    }
+
+    function adminUnbanUser(username) {
+      if (confirm(`Unban user '${username}'?`)) {
+        let bansDB = JSON.parse(localStorage.getItem('spacewaves_bans')) || {};
+        for (let bUser in bansDB) {
+          if (bUser.toLowerCase() === username.toLowerCase()) {
+            delete bansDB[bUser];
+          }
+        }
+        localStorage.setItem('spacewaves_bans', JSON.stringify(bansDB));
+        renderAdminUserTable();
+      }
+    }
+
+    /* =========================================================
+       2. LEADERBOARD SYSTEM (Endless Mode Only)
+       ========================================================= */
+    const LeaderboardDB = {
+      getScores() { return JSON.parse(localStorage.getItem('spacewaves_highscores')) || {}; },
+      saveScore(username, score) {
+        let scores = this.getScores();
+        if (!scores[username] || score > scores[username]) {
+          scores[username] = score;
+          localStorage.setItem('spacewaves_highscores', JSON.stringify(scores));
+        }
+      },
+      getRankedArray() {
+        let scores = this.getScores();
+        return Object.keys(scores).map(user => ({ name: user, score: scores[user] })).sort((a, b) => b.score - a.score);
       }
     };
 
-    window.editScore = (uid, currentScore) => {
-      const newScore = prompt("Enter corrected distance record:", currentScore);
-      if (newScore !== null && !isNaN(newScore)) {
-        update(ref(database, `users/${uid}`), { score: Number(newScore) });
+    function openLeaderboard() {
+      openModal('leaderboardModal');
+      const tbody = document.getElementById('leaderboardBody');
+      const data = LeaderboardDB.getRankedArray();
+      
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:30px;">No records established yet.</td></tr>`;
+        return;
       }
-    };
+      tbody.innerHTML = '';
+      data.slice(0, 10).forEach((item, index) => {
+        let rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+        let isSelf = item.name === currentUser;
+        tbody.innerHTML += `
+          <tr>
+            <td><div class="rank-badge ${rankClass}">${index + 1}</div></td>
+            <td style="color: ${isSelf ? 'var(--sw-gold)' : '#fff'}">${item.name} ${isSelf ? '(You)' : ''}</td>
+            <td style="color: var(--sw-gold); font-weight: 900; font-variant-numeric: tabular-nums;">${item.score}m</td>
+          </tr>
+        `;
+      });
+    }
 
-    window.deleteUser = (uid) => {
-      if (confirm("Permanently delete this user record from the database?")) {
-        remove(ref(database, `users/${uid}`));
-      }
-    };
+    /* =========================================================
+       3. BACKGROUND HYPERSPACE ENGINE
+       ========================================================= */
+    const bgCanvas = document.getElementById('bgCanvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let stars = [];
+    function resizeBg() {
+      bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
+      stars = Array.from({length: 150}, () => ({ x: Math.random() * bgCanvas.width, y: Math.random() * bgCanvas.height, size: Math.random() * 2, speed: Math.random() * 8 + 2 }));
+    }
+    window.addEventListener('resize', resizeBg); resizeBg();
+    function renderBg() {
+      bgCtx.fillStyle = 'rgba(2, 0, 5, 0.4)'; bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+      bgCtx.fillStyle = '#ffffff';
+      stars.forEach(s => { 
+        s.x -= s.speed; if (s.x < 0) { s.x = bgCanvas.width; s.y = Math.random() * bgCanvas.height; }
+        bgCtx.fillRect(s.x, s.y, s.size * (s.speed/4), s.size);
+      });
+      requestAnimationFrame(renderBg);
+    }
+    renderBg();
 
-    window.makeAdmin = (uid) => update(ref(database, `users/${uid}`), { role: 'admin' });
-
-    // --- SPACE WAVES GAME ENGINE (ACCURATE WAVE MECHANIC) ---
+    /* =========================================================
+       4. HIGH-PERFORMANCE GAME ENGINE
+       ========================================================= */
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    let isPlaying = false;
-    let player, obstacles, particles, distance, isHolding = false;
+    let isHolding = false, animId = null, lastTime = 0;
 
-    window.addEventListener('mousedown', () => isHolding = true);
-    window.addEventListener('mouseup', () => isHolding = false);
-    window.addEventListener('touchstart', () => isHolding = true);
-    window.addEventListener('touchend', () => isHolding = false);
-    window.addEventListener('keydown', e => { if(e.code === 'Space' || e.key === 'ArrowUp' || e.key === 'w') isHolding = true; });
-    window.addEventListener('keyup', e => { if(e.code === 'Space' || e.key === 'ArrowUp' || e.key === 'w') isHolding = false; });
+    const LEVEL_CONFIG = {
+      1: { name: 'Sector Alpha', speedX: 500, speedY: 550, targetDist: 300000, color: '#00e5ff', complexity: 1, allowBlockRiding: true },
+      2: { name: 'Nebula Drift', speedX: 650, speedY: 650, targetDist: 500000, color: '#b08dff', complexity: 2, allowBlockRiding: false },
+      3: { name: 'Void Runner', speedX: 800, speedY: 750, targetDist: 800000, color: '#ff0055', complexity: 3, allowBlockRiding: false },
+      'endless': { name: 'Infinity Grid', speedX: 650, speedY: 700, targetDist: Infinity, color: '#ffaa00', complexity: 3, allowBlockRiding: false }
+    };
 
-    class WavePlayer {
-      constructor() {
-        this.x = 150;
-        this.y = canvas.height / 2;
-        this.size = 18;
-        this.speed = 6.5; // Up/down flight speed when holding
-      }
-      update() {
-        if (isHolding) {
-          this.y -= this.speed;
-        } else {
-          this.y += this.speed;
+    window.addEventListener('keydown', e => { 
+      if ((e.code === 'Space' || e.code === 'ArrowUp') && !e.repeat) { isHolding = true; Spacewaves.handleInput(); } 
+      if (e.code === 'Escape') { Spacewaves.exitToMenu(); }
+    });
+    window.addEventListener('keyup', e => { if (e.code === 'Space' || e.code === 'ArrowUp') isHolding = false; });
+    canvas.addEventListener('mousedown', () => { isHolding = true; Spacewaves.handleInput(); });
+    canvas.addEventListener('mouseup', () => { isHolding = false; });
+
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+      if (id === 'gameModal') Spacewaves.exitToMenu();
+    }
+
+    function launchGame() {
+      openModal('gameModal');
+      document.getElementById('spacewavesMenu').style.display = 'flex';
+      document.getElementById('spacewavesHud').style.display = 'none';
+      document.getElementById('crashOverlay').style.display = 'none';
+      document.getElementById('winOverlay').style.display = 'none';
+      document.getElementById('gameCloseBtn').style.display = 'flex';
+    }
+
+    function startSpacewavesLevel(lvlId) {
+      document.getElementById('spacewavesMenu').style.display = 'none';
+      document.getElementById('gameCloseBtn').style.display = 'none';
+      document.getElementById('spacewavesHud').style.display = 'flex';
+      
+      const cfg = LEVEL_CONFIG[lvlId];
+      document.documentElement.style.setProperty('--theme-color', cfg.color);
+      document.getElementById('swLevelName').innerText = cfg.name;
+      
+      if (lvlId === 'endless') document.getElementById('swProgressBarContainer').style.display = 'none';
+      else document.getElementById('swProgressBarContainer').style.display = 'block';
+
+      Spacewaves.init(lvlId, cfg);
+      lastTime = performance.now();
+      if (animId) cancelAnimationFrame(animId);
+      animId = requestAnimationFrame(gameLoop);
+    }
+
+    function gameLoop(now) {
+      const dt = Math.min((now - lastTime) / 1000, 0.03); 
+      lastTime = now;
+      Spacewaves.updateAndDraw(dt);
+      if (Spacewaves.active) animId = requestAnimationFrame(gameLoop);
+    }
+
+    const Spacewaves = {
+      active: false, state: 'PLAYING', config: null, levelId: null,
+      x: 250, y: 300, radius: 11,
+      
+      topBoundary: 60, bottomBoundary: 540,
+      angle: 0, distancePixels: 0,
+      trail: [], particles: [], obstacles: [],
+      lastGeneratedX: 1200,
+
+      init(levelId, config) {
+        this.active = true; this.state = 'PLAYING';
+        this.levelId = levelId; this.config = config;
+        this.y = this.bottomBoundary; this.distancePixels = 0; this.angle = 0;
+        this.trail = []; this.particles = []; this.obstacles = [];
+        this.lastGeneratedX = 1200;
+        document.getElementById('crashOverlay').style.display = 'none';
+        document.getElementById('winOverlay').style.display = 'none';
+        this.currentSpeedX = config.speedX;
+      },
+
+      generateObstacles() {
+        while (this.lastGeneratedX < this.distancePixels + 3000) {
+          let gap = 550 + (this.currentSpeedX * 0.25) + Math.random() * 200; 
+          let maxTypes = this.config.complexity === 1 ? 3 : (this.config.complexity === 2 ? 5 : 7);
+          let type = Math.floor(Math.random() * maxTypes);
+          
+          let bw = 160 + Math.random() * 180; 
+          let bh = 110 + Math.random() * 90; 
+
+          switch(type) {
+            case 0:
+              this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: this.bottomBoundary - bh, w: bw, h: bh });
+              this.lastGeneratedX += bw + gap; break;
+            case 1:
+              this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: this.topBoundary, w: bw, h: bh });
+              this.lastGeneratedX += bw + gap; break;
+            case 2:
+              this.obstacles.push({ type: 'spike', ground: 'bottom', x: this.lastGeneratedX, count: 2 + Math.floor(Math.random() * 3), isUp: false });
+              this.lastGeneratedX += gap; break;
+            case 3:
+              this.obstacles.push({ type: 'spike', ground: 'top', x: this.lastGeneratedX, count: 2 + Math.floor(Math.random() * 3), isUp: true });
+              this.lastGeneratedX += gap; break;
+            case 4:
+              this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: 280 - (bh/2), w: bw, h: bh });
+              this.lastGeneratedX += bw + gap; break;
+            case 5:
+              let tunnelGap = 210; 
+              let topH = 140; let botH = this.bottomBoundary - this.topBoundary - topH - tunnelGap;
+              this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: this.topBoundary, w: bw, h: topH });
+              this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: this.bottomBoundary - botH, w: bw, h: botH });
+              this.lastGeneratedX += bw + gap; break;
+            case 6:
+              let blockY = 240;
+              this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: blockY, w: bw, h: 110 });
+              this.obstacles.push({ type: 'spike', ground: blockY, x: this.lastGeneratedX + 30, count: 1, isUp: true });
+              this.obstacles.push({ type: 'spike', ground: blockY + 110, x: this.lastGeneratedX + bw - 70, count: 1, isUp: false });
+              this.lastGeneratedX += bw + gap; break;
+          }
         }
-      }
-      draw() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(isHolding ? -0.45 : 0.45);
-        ctx.fillStyle = '#00d2ff';
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#00d2ff';
-        ctx.beginPath();
-        ctx.moveTo(this.size, 0);
-        ctx.lineTo(-this.size, -this.size * 0.7);
-        ctx.lineTo(-this.size * 0.5, 0);
-        ctx.lineTo(-this.size, this.size * 0.7);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-      }
-    }
+        this.obstacles = this.obstacles.filter(obs => obs.x + (obs.w||200) > this.distancePixels - 800);
+      },
 
-    class ObstacleBlock {
-      constructor(x, topH, botH) {
-        this.x = x;
-        this.w = 55;
-        this.topH = topH;
-        this.botH = botH;
-        this.passed = false;
-      }
-      update(speed) {
-        this.x -= speed;
-      }
-      draw() {
-        ctx.fillStyle = '#ff4d4d';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#ff4d4d';
-        // Top obstacle wall
-        ctx.fillRect(this.x, 0, this.w, this.topH);
-        // Bottom obstacle wall
-        ctx.fillRect(this.x, canvas.height - this.botH, this.w, this.botH);
-        ctx.shadowBlur = 0;
-      }
-    }
+      handleInput() {
+        if (this.state === 'GAMEOVER') this.init(this.levelId, this.config);
+        else if (this.state === 'WIN') this.exitToMenu();
+      },
+      exitToMenu() {
+        if (!this.active) return;
+        this.active = false;
+        if(animId) cancelAnimationFrame(animId);
+        launchGame();
+      },
 
-    class Particle {
-      constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.vx = (Math.random() - 1) * 6;
-        this.vy = (Math.random() - 0.5) * 6;
-        this.life = 1.0;
-      }
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.life -= 0.04;
-      }
-      draw() {
-        ctx.fillStyle = `rgba(0, 210, 255, ${this.life})`;
-        ctx.fillRect(this.x, this.y, 4, 4);
-      }
-    }
-
-    async function gameOver() {
-      isPlaying = false;
-      const finalDist = Math.floor(distance);
-      if (finalDist > (userData.score || 0)) {
-        await update(ref(database, `users/${currentUserId}`), { score: finalDist });
-        userData.score = finalDist;
-      }
-      setupDashboard();
-      showView('dashboard-view');
-    }
-
-    function loop() {
-      if (!isPlaying) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Tunnel border lines
-      ctx.strokeStyle = 'rgba(0, 210, 255, 0.3)';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
-
-      distance += 0.25;
-      const currentScrollSpeed = 6 + Math.min(distance / 500, 4); // Progressive speed ramp
-
-      player.update();
-      player.draw();
-
-      // Spawn procedural wave tunnels / obstacles
-      if (obstacles.length === 0 || obstacles[obstacles.length - 1].x < canvas.width - 280) {
-        const lastTop = obstacles.length > 0 ? obstacles[obstacles.length - 1].topH : canvas.height * 0.25;
-        const lastBot = obstacles.length > 0 ? obstacles[obstacles.length - 1].botH : canvas.height * 0.25;
-        
-        let delta = (Math.random() - 0.5) * 120;
-        let newTop = Math.max(50, Math.min(canvas.height * 0.55, lastTop + delta));
-        let newBot = Math.max(50, Math.min(canvas.height * 0.55, lastBot - delta));
-        
-        // Ensure gap safety window
-        if (canvas.height - newTop - newBot < 130) {
-          newTop -= 35;
-          newBot -= 35;
+      createExplosion(color) {
+        for (let i = 0; i < 60; i++) {
+          let a = Math.random() * Math.PI * 2; let s = Math.random() * 600 + 100;
+          this.particles.push({ x: this.x, y: this.y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life: 1, size: Math.random() * 6 + 2, color: color });
         }
-        
-        obstacles.push(new ObstacleBlock(canvas.width, newTop, newBot));
-      }
+      },
 
-      for (let i = obstacles.length - 1; i >= 0; i--) {
-        let obs = obstacles[i];
-        obs.update(currentScrollSpeed);
-        obs.draw();
+      updateAndDraw(dt) {
+        if (this.state === 'PLAYING') {
+          if (this.levelId === 'endless') this.currentSpeedX += dt * 4; 
+          this.distancePixels += this.currentSpeedX * dt;
+          
+          if (this.distancePixels >= this.config.targetDist) {
+            this.win();
+          } else {
+            this.generateObstacles();
+            
+            let currentGround = this.bottomBoundary;
+            let currentCeil = this.topBoundary;
 
-        // Check boundaries & wall crashes
-        if (player.y - 8 <= 10 || player.y + 8 >= canvas.height - 10) {
-          triggerCrash();
-        }
+            if (this.config.allowBlockRiding) {
+              this.obstacles.forEach(obs => {
+                if (obs.type === 'block') {
+                  let sx = obs.x - this.distancePixels + this.x;
+                  if (this.x >= sx && this.x <= sx + obs.w) {
+                    if (obs.y >= this.y && obs.y < currentGround) {
+                      currentGround = obs.y;
+                    }
+                  }
+                }
+              });
+            }
 
-        // Check obstacle block collisions
-        if (player.x + 8 > obs.x && player.x - 8 < obs.x + obs.w) {
-          if (player.y - 8 < obs.topH || player.y + 8 > canvas.height - obs.botH) {
-            triggerCrash();
+            if (isHolding) {
+              this.y -= this.config.speedY * dt;
+              if (this.y <= currentCeil + this.radius) { this.y = currentCeil + this.radius; this.angle = 0; } else { this.angle = -Math.PI / 5; }
+            } else {
+              this.y += this.config.speedY * dt;
+              if (this.y >= currentGround - this.radius) { this.y = currentGround - this.radius; this.angle = 0; } else { this.angle = Math.PI / 5; }
+            }
+
+            this.trail.push({ x: this.x, y: this.y, d: this.distancePixels });
+            if (this.trail.length > 35) this.trail.shift();
+
+            this.checkCollisions();
+          }
+          
+          let meters = Math.floor(this.distancePixels / 100);
+          document.getElementById('swProgressText').innerText = `${meters}m`;
+          
+          if (this.levelId !== 'endless') {
+            let pct = Math.min(100, (this.distancePixels / this.config.targetDist) * 100);
+            document.getElementById('swProgressFill').style.width = `${pct}%`;
+            document.getElementById('swPercent').innerText = `${Math.floor(pct)}%`;
           }
         }
 
-        if (obs.x + obs.w < 0) {
-          obstacles.splice(i, 1);
+        /* RENDERING */
+        ctx.fillStyle = '#020005'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        this.obstacles.forEach(obs => {
+          let sx = obs.x - this.distancePixels + this.x;
+          if (sx > -400 && sx < canvas.width + 400) {
+            if (obs.type === 'block') {
+              ctx.fillStyle = '#0a0212'; ctx.fillRect(sx, obs.y, obs.w, obs.h);
+              ctx.strokeStyle = this.config.color; ctx.lineWidth = 2; ctx.strokeRect(sx, obs.y, obs.w, obs.h);
+              
+              ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+              for(let ix = 0; ix < obs.w; ix += 30) { ctx.beginPath(); ctx.moveTo(sx + ix, obs.y); ctx.lineTo(sx + ix, obs.y + obs.h); ctx.stroke(); }
+            } else if (obs.type === 'spike') {
+              let isTop = obs.isUp; 
+              let sy = obs.ground === 'top' ? this.topBoundary : (obs.ground === 'bottom' ? this.bottomBoundary : obs.ground);
+              
+              for(let i=0; i<obs.count; i++) {
+                ctx.beginPath();
+                if(isTop) { ctx.moveTo(sx + i*40, sy); ctx.lineTo(sx + i*40 + 20, sy - 35); ctx.lineTo(sx + i*40 + 40, sy); } 
+                else { ctx.moveTo(sx + i*40, sy); ctx.lineTo(sx + i*40 + 20, sy + 35); ctx.lineTo(sx + i*40 + 40, sy); }
+                ctx.fillStyle = '#0a0212'; ctx.fill();
+                ctx.strokeStyle = '#ff0055'; ctx.lineWidth = 3; ctx.stroke();
+              }
+            }
+          }
+        });
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(0, this.topBoundary); ctx.lineTo(canvas.width, this.topBoundary); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, this.bottomBoundary); ctx.lineTo(canvas.width, this.bottomBoundary); ctx.stroke();
+
+        if (this.trail.length > 1) {
+          ctx.save();
+          ctx.shadowColor = this.config.color; ctx.shadowBlur = 15;
+          ctx.strokeStyle = this.config.color; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+          ctx.globalAlpha = 0.8;
+          ctx.beginPath();
+          for (let i = 0; i < this.trail.length; i++) {
+            let px = this.trail[i].x - (this.distancePixels - this.trail[i].d);
+            if (i === 0) ctx.moveTo(px, this.trail[i].y); else ctx.lineTo(px, this.trail[i].y);
+          }
+          ctx.stroke(); ctx.restore();
         }
+
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          let p = this.particles[i];
+          p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt * 2.0;
+          if (p.life <= 0) { this.particles.splice(i, 1); continue; }
+          ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+        }
+        ctx.globalAlpha = 1.0;
+
+        if (this.state !== 'GAMEOVER') {
+          ctx.save();
+          ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+          ctx.fillStyle = '#ffffff'; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15;
+          ctx.beginPath(); ctx.moveTo(this.radius + 6, 0); ctx.lineTo(-this.radius, -this.radius - 2); ctx.lineTo(-this.radius + 6, 0); ctx.lineTo(-this.radius, this.radius + 2); ctx.fill();
+          ctx.restore();
+        }
+      },
+
+      checkCollisions() {
+        let px1 = this.x - this.radius + 3; let px2 = this.x + this.radius - 3;
+        let py1 = this.y - this.radius + 3; let py2 = this.y + this.radius - 3;
+
+        for (let obs of this.obstacles) {
+          let sx = obs.x - this.distancePixels + this.x;
+          if (sx > this.x + 100 || sx + (obs.w||200) < this.x - 100) continue;
+
+          if (obs.type === 'block') {
+            let bx1 = sx; let bx2 = sx + obs.w;
+            let by1 = obs.y; let by2 = obs.y + obs.h;
+            
+            if (this.config.allowBlockRiding && Math.abs(py2 - by1) < 8 && px2 > bx1 + 4 && px1 < bx2 - 4 && this.y <= by1 + 4) {
+              continue; 
+            }
+
+            if (px2 > bx1 && px1 < bx2 && py2 > by1 && py1 < by2) {
+              this.crash(); return;
+            }
+          } else if (obs.type === 'spike') {
+            let isTop = obs.isUp; 
+            let sy = obs.ground === 'top' ? this.topBoundary : (obs.ground === 'bottom' ? this.bottomBoundary : obs.ground);
+            
+            for(let i=0; i<obs.count; i++) {
+              let spikeLeft = sx + (i * 40) + 4;
+              let spikeRight = spikeLeft + 32;
+              
+              if (px2 > spikeLeft && px1 < spikeRight) {
+                if (isTop && py1 < sy && py2 > sy - 28) { this.crash(); return; }
+                if (!isTop && py2 > sy && py1 < sy + 28) { this.crash(); return; }
+              }
+            }
+          }
+        }
+      },
+
+      crash() {
+        if (this.state === 'GAMEOVER') return;
+        this.state = 'GAMEOVER';
+        this.createExplosion('#ff0055');
+        
+        document.getElementById('crashDist').innerText = `Distance: ${Math.floor(this.distancePixels/100)}m`;
+        document.getElementById('crashOverlay').style.display = 'flex';
+        
+        if (this.levelId === 'endless') LeaderboardDB.saveScore(currentUser, Math.floor(this.distancePixels / 100));
+      },
+
+      win() {
+        if (this.state === 'WIN') return;
+        this.state = 'WIN';
+        this.distancePixels = this.config.targetDist;
+        
+        this.createExplosion(this.config.color);
+        document.getElementById('winOverlay').style.display = 'flex';
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 }, colors: ['#ffffff', this.config.color, '#ff0055'] });
       }
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update();
-        particles[i].draw();
-        if (particles[i].life <= 0) particles.splice(i, 1);
-      }
-
-      document.getElementById('score-display').innerText = Math.floor(distance);
-      requestAnimationFrame(loop);
-    }
-
-    function triggerCrash() {
-      for(let i=0; i<35; i++) particles.push(new Particle(player.x, player.y));
-      gameOver();
-    }
-
-    document.getElementById('play-btn').addEventListener('click', () => {
-      showView('game-view');
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      player = new WavePlayer();
-      obstacles = [];
-      particles = [];
-      distance = 0;
-      isPlaying = true;
-      loop();
-    });
-
-    document.getElementById('quit-btn').addEventListener('click', () => { isPlaying = false; showView('dashboard-view'); setupDashboard(); });
-    window.addEventListener('resize', () => { if(isPlaying){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }});
-
-    checkSession();
+    };
   </script>
 </body>
 </html>
