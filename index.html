@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crazy Games</title>
+  <title>Spacewaves.io | Master Edition</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -193,7 +193,7 @@
   <div id="maintenanceScreen">
     <i class="ph-fill ph-wrench"></i>
     <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 10px; color: #fff;">SYSTEM UNDER MAINTENANCE</h1>
-    <p style="color: var(--text-muted); max-width: 450px; font-size: 15px; line-height: 1.6; margin-bottom: 25px;">The server network is currently undergoing scheduled maintenance or administrative updates. Please check back shortly.</p>
+    <p style="color: var(--text-muted); max-width: 450px; font-size: 15px; line-height: 1.6; margin-bottom: 25px;">The Spacewaves server network is currently undergoing scheduled maintenance or administrative updates. Please check back shortly.</p>
     <div style="display: flex; flex-direction: column; gap: 12px; width: 220px;">
       <button class="gate-btn" onclick="location.reload()" style="width: 100%; padding: 12px;">Retry Connection</button>
       <button class="gate-btn" onclick="openModal('adminAuthModal')" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.08); color: var(--sw-cyan); border: 1px solid var(--glass-border);">Admin Override</button>
@@ -208,14 +208,14 @@
       <div id="banAlertBox" style="display:none; background: rgba(255,0,85,0.15); border: 1px solid var(--sw-pink); color: #fff; padding: 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; text-align: left; line-height: 1.4;"></div>
       <form class="auth-form" onsubmit="handleAccountGate(event)">
         <div class="input-group">
-          <label>Username</label>
+          <label>GamerTag</label>
           <div class="input-wrapper">
             <input type="text" id="gateUsername" placeholder="Enter username..." required minlength="3" maxlength="16" autocomplete="off">
             <i class="ph-fill ph-user"></i>
           </div>
         </div>
         <div class="input-group">
-          <label>Password</label>
+          <label>Secure Password</label>
           <div class="input-wrapper">
             <input type="password" id="gatePassword" placeholder="Enter password..." required minlength="4">
             <i class="ph-fill ph-lock-key"></i>
@@ -833,10 +833,12 @@
               this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: this.topBoundary, w: bw, h: bh });
               this.lastGeneratedX += bw + gap; break;
             case 2:
-              this.obstacles.push({ type: 'spike', ground: 'bottom', x: this.lastGeneratedX, count: 2 + Math.floor(Math.random() * 3), isUp: false });
+              // Bottom boundary spikes (points UP into the area)
+              this.obstacles.push({ type: 'spike', ground: 'bottom', x: this.lastGeneratedX, count: 2 + Math.floor(Math.random() * 3), isUp: true });
               this.lastGeneratedX += gap; break;
             case 3:
-              this.obstacles.push({ type: 'spike', ground: 'top', x: this.lastGeneratedX, count: 2 + Math.floor(Math.random() * 3), isUp: true });
+              // Top boundary spikes (points DOWN into the area)
+              this.obstacles.push({ type: 'spike', ground: 'top', x: this.lastGeneratedX, count: 2 + Math.floor(Math.random() * 3), isUp: false });
               this.lastGeneratedX += gap; break;
             case 4:
               this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: 280 - (bh/2), w: bw, h: bh });
@@ -850,8 +852,8 @@
             case 6:
               let blockY = 240;
               this.obstacles.push({ type: 'block', x: this.lastGeneratedX, y: blockY, w: bw, h: 110 });
-              this.obstacles.push({ type: 'spike', ground: blockY, x: this.lastGeneratedX + 30, count: 1, isUp: true });
-              this.obstacles.push({ type: 'spike', ground: blockY + 110, x: this.lastGeneratedX + bw - 70, count: 1, isUp: false });
+              this.obstacles.push({ type: 'spike', ground: blockY, x: this.lastGeneratedX + 30, count: 1, isUp: true }); // top of block, points UP
+              this.obstacles.push({ type: 'spike', ground: blockY + 110, x: this.lastGeneratedX + bw - 70, count: 1, isUp: false }); // bottom of block, points DOWN
               this.lastGeneratedX += bw + gap; break;
           }
         }
@@ -878,7 +880,8 @@
 
       updateAndDraw(dt) {
         if (this.state === 'PLAYING') {
-          if (this.levelId === 'endless') this.currentSpeedX += dt * 4; 
+          // Increase speed consistently across ALL levels to progressively increase difficulty
+          this.currentSpeedX += dt * 6; 
           this.distancePixels += this.currentSpeedX * dt;
           
           if (this.distancePixels >= this.config.targetDist) {
@@ -939,13 +942,18 @@
               ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
               for(let ix = 0; ix < obs.w; ix += 30) { ctx.beginPath(); ctx.moveTo(sx + ix, obs.y); ctx.lineTo(sx + ix, obs.y + obs.h); ctx.stroke(); }
             } else if (obs.type === 'spike') {
-              let isTop = obs.isUp; 
+              let pointsUp = obs.isUp; 
               let sy = obs.ground === 'top' ? this.topBoundary : (obs.ground === 'bottom' ? this.bottomBoundary : obs.ground);
               
               for(let i=0; i<obs.count; i++) {
                 ctx.beginPath();
-                if(isTop) { ctx.moveTo(sx + i*40, sy); ctx.lineTo(sx + i*40 + 20, sy - 35); ctx.lineTo(sx + i*40 + 40, sy); } 
-                else { ctx.moveTo(sx + i*40, sy); ctx.lineTo(sx + i*40 + 20, sy + 35); ctx.lineTo(sx + i*40 + 40, sy); }
+                if(pointsUp) { 
+                  // Pointing up: Base is sy, tip is sy - 35
+                  ctx.moveTo(sx + i*40, sy); ctx.lineTo(sx + i*40 + 20, sy - 35); ctx.lineTo(sx + i*40 + 40, sy); 
+                } else { 
+                  // Pointing down: Base is sy, tip is sy + 35
+                  ctx.moveTo(sx + i*40, sy); ctx.lineTo(sx + i*40 + 20, sy + 35); ctx.lineTo(sx + i*40 + 40, sy); 
+                }
                 ctx.fillStyle = '#0a0212'; ctx.fill();
                 ctx.strokeStyle = '#ff0055'; ctx.lineWidth = 3; ctx.stroke();
               }
@@ -1008,7 +1016,7 @@
               this.crash(); return;
             }
           } else if (obs.type === 'spike') {
-            let isTop = obs.isUp; 
+            let pointsUp = obs.isUp; 
             let sy = obs.ground === 'top' ? this.topBoundary : (obs.ground === 'bottom' ? this.bottomBoundary : obs.ground);
             
             for(let i=0; i<obs.count; i++) {
@@ -1016,8 +1024,10 @@
               let spikeRight = spikeLeft + 32;
               
               if (px2 > spikeLeft && px1 < spikeRight) {
-                if (isTop && py1 < sy && py2 > sy - 28) { this.crash(); return; }
-                if (!isTop && py2 > sy && py1 < sy + 28) { this.crash(); return; }
+                // If it points UP, tip is at sy - 35
+                if (pointsUp && py2 > sy - 28 && py1 < sy) { this.crash(); return; }
+                // If it points DOWN, tip is at sy + 35
+                if (!pointsUp && py1 < sy + 28 && py2 > sy) { this.crash(); return; }
               }
             }
           }
