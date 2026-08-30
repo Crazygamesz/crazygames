@@ -864,6 +864,7 @@
         if (this.state === 'GAMEOVER') this.init(this.levelId, this.config);
         else if (this.state === 'WIN') this.exitToMenu();
       },
+      
       exitToMenu() {
         if (!this.active) return;
         this.active = false;
